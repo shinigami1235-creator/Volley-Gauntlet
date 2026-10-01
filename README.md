@@ -33,7 +33,7 @@ On Android, open the link in Chrome and tap Install app (or Add to Home screen f
 - 4 difficulties: Story, Normal, Hard and Nightmare.
 - The Forge, where Embers from your runs buy permanent upgrades and skins.
 
-Progress saves in your browser. Some game sites don't keep browser saves, so the Save code screen gives you a code you can paste back in later or on another device.
+Progress saves in your browser. The Save code screen gives you a code you can paste in on another device to bring your progress over.
 
 ## Building from source
 
@@ -43,7 +43,7 @@ The game is split into parts in `src/` and joined into one file by `build.py`. T
 python build.py index.html --pwa
 ```
 
-`--pwa` adds the links to `manifest.webmanifest`, `sw.js` and the `icons/` folder for the installable version. Leave it off for sites that only take one self-contained file, such as Nioret World. Bump `CACHE_VERSION` in `sw.js` whenever you push a new build, since that's what makes installed copies update.
+`--pwa` adds the links to `manifest.webmanifest`, `sw.js` and the `icons/` folder for the installable version. Leave it off if you only want the single file. Bump `CACHE_VERSION` in `sw.js` whenever you push a new build, since that's what makes installed copies update.
 
 The build checks that the file starts with `<!doctype html>` and stays under 2 MiB.
 
