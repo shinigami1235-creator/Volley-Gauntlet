@@ -63,6 +63,8 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
 #acts{position:absolute;right:calc(var(--u)*12px);bottom:calc(var(--u)*14px);display:flex;flex-direction:column;gap:calc(var(--u)*12px);align-items:center;}
 .act{pointer-events:auto;position:relative;width:calc(var(--u)*68px);height:calc(var(--u)*68px);border-radius:50%;border:0;padding:0;background:rgba(20,16,26,.8);color:#fff;cursor:pointer;touch-action:none;box-shadow:inset 0 0 0 calc(var(--u)*3px) rgba(255,255,255,.16);font-family:"Segoe UI Black","Arial Black",system-ui,sans-serif;font-weight:900;font-size:calc(var(--u)*15px);overflow:hidden;}
 .act.small{width:calc(var(--u)*58px);height:calc(var(--u)*58px);font-size:calc(var(--u)*14px);}
+#acts.left{right:auto;left:calc(var(--u)*12px);}
+@media (pointer:coarse){.act,.act.small{width:calc(var(--u)*82px);height:calc(var(--u)*82px);font-size:calc(var(--u)*16px);}.act small{display:none;}#acts{gap:calc(var(--u)*14px);bottom:calc(var(--u)*18px);}}
 .act span{position:relative;z-index:1;text-shadow:0 2px 0 #000;}
 .act small{position:relative;z-index:1;display:block;font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:900;font-size:calc(var(--u)*9.5px);color:var(--muted);}
 .act .cd{position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(0,0,0,.7) calc(var(--p,0)*1%),transparent 0);}
@@ -235,7 +237,7 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
       <button class="btn" id="btnPlay">Play</button>
       <div class="row menu"><button class="btn alt sm" id="btnForge">Forge</button><button class="btn alt sm" id="btnCodex">Codex</button><button class="btn alt sm" id="btnSave">Save code</button></div>
       <div class="best" id="bestT"></div>
-      <div class="keys">Keyboard: WASD or arrow keys to move, Space to dash, E for your class skill, P to pause. In menus, arrow keys pick and Enter confirms.<br>Touch: double-tap to dash. A gamepad works too.</div>
+      <div class="keys">Keyboard: WASD or arrow keys to move, Space to dash, E for your class skill, P to pause. In menus, arrow keys pick and Enter confirms.<br>Touch: drag to move, and flick or tap a second finger to dash. A gamepad works too.</div>
       <div class="keys cred">Music is played live from FluidR3 GM instrument samples (MIT licence).</div>
     </div>
   </div>
@@ -277,6 +279,7 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
       <h2>Paused</h2>
       <div class="build" id="build"></div>
       <div class="row"><button class="btn alt sm" id="btnShake">Screen shake: On</button><button class="btn alt sm" id="btnMusic">Music: On</button></div>
+      <div class="row"><button class="btn alt sm" id="btnFlick">Flick to dash: On</button><button class="btn alt sm" id="btnAuto">Auto skill: Off</button><button class="btn alt sm" id="btnSide">Buttons: Right</button><button class="btn alt sm" id="btnBuzz">Vibration: On</button></div>
       <div class="row"><button class="btn" id="btnResume">Resume</button><button class="btn alt" id="btnRestart">Restart</button><button class="btn alt" id="btnMenu">Main menu</button></div>
     </div>
   </div>

@@ -85,6 +85,8 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
 #acts{position:absolute;right:calc(var(--u)*12px);bottom:calc(var(--u)*14px);display:flex;flex-direction:column;gap:calc(var(--u)*12px);align-items:center;}
 .act{pointer-events:auto;position:relative;width:calc(var(--u)*68px);height:calc(var(--u)*68px);border-radius:50%;border:0;padding:0;background:rgba(20,16,26,.8);color:#fff;cursor:pointer;touch-action:none;box-shadow:inset 0 0 0 calc(var(--u)*3px) rgba(255,255,255,.16);font-family:"Segoe UI Black","Arial Black",system-ui,sans-serif;font-weight:900;font-size:calc(var(--u)*15px);overflow:hidden;}
 .act.small{width:calc(var(--u)*58px);height:calc(var(--u)*58px);font-size:calc(var(--u)*14px);}
+#acts.left{right:auto;left:calc(var(--u)*12px);}
+@media (pointer:coarse){.act,.act.small{width:calc(var(--u)*82px);height:calc(var(--u)*82px);font-size:calc(var(--u)*16px);}.act small{display:none;}#acts{gap:calc(var(--u)*14px);bottom:calc(var(--u)*18px);}}
 .act span{position:relative;z-index:1;text-shadow:0 2px 0 #000;}
 .act small{position:relative;z-index:1;display:block;font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-weight:900;font-size:calc(var(--u)*9.5px);color:var(--muted);}
 .act .cd{position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(0,0,0,.7) calc(var(--p,0)*1%),transparent 0);}
@@ -219,6 +221,14 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
 .gold{color:#ffd166;}
 @media (prefers-reduced-motion:reduce){#banner{transition:opacity .2s;} .btn,.card,.cls{transition:none;}}
 </style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0b11">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Volley Gauntlet">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 </head>
 <body>
 
@@ -259,7 +269,7 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
       <button class="btn" id="btnPlay">Play</button>
       <div class="row menu"><button class="btn alt sm" id="btnForge">Forge</button><button class="btn alt sm" id="btnCodex">Codex</button><button class="btn alt sm" id="btnSave">Save code</button></div>
       <div class="best" id="bestT"></div>
-      <div class="keys">Keyboard: WASD or arrow keys to move, Space to dash, E for your class skill, P to pause. In menus, arrow keys pick and Enter confirms.<br>Touch: double-tap to dash. A gamepad works too.</div>
+      <div class="keys">Keyboard: WASD or arrow keys to move, Space to dash, E for your class skill, P to pause. In menus, arrow keys pick and Enter confirms.<br>Touch: drag to move, and flick or tap a second finger to dash. A gamepad works too.</div>
       <div class="keys cred">Music is played live from FluidR3 GM instrument samples (MIT licence).</div>
     </div>
   </div>
@@ -301,6 +311,7 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
       <h2>Paused</h2>
       <div class="build" id="build"></div>
       <div class="row"><button class="btn alt sm" id="btnShake">Screen shake: On</button><button class="btn alt sm" id="btnMusic">Music: On</button></div>
+      <div class="row"><button class="btn alt sm" id="btnFlick">Flick to dash: On</button><button class="btn alt sm" id="btnAuto">Auto skill: Off</button><button class="btn alt sm" id="btnSide">Buttons: Right</button><button class="btn alt sm" id="btnBuzz">Vibration: On</button></div>
       <div class="row"><button class="btn" id="btnResume">Resume</button><button class="btn alt" id="btnRestart">Restart</button><button class="btn alt" id="btnMenu">Main menu</button></div>
     </div>
   </div>
@@ -326,6 +337,9 @@ const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Saves use browser storage when the host allows it. In a sandboxed player without storage, everything is kept in memory for the session. */
 const STORE=(()=>{const mem=new Map();let ls=null;try{ls=window.localStorage;ls.setItem('vg_probe','1');ls.removeItem('vg_probe')}catch(e){ls=null}
   return{get(k){if(ls){try{return ls.getItem(k)}catch(e){}}return mem.has(k)?mem.get(k):null},set(k,v){mem.set(k,String(v));if(ls){try{ls.setItem(k,String(v))}catch(e){}}}}})();
+const OPT=(()=>{let o={};try{o=JSON.parse(STORE.get('vg_opts')||'{}')||{}}catch(e){o={}}return Object.assign({flick:true,auto:false,left:false,buzz:true},o)})();
+function saveOpts(){STORE.set('vg_opts',JSON.stringify(OPT))}
+function buzz(p){if(OPT.buzz&&navigator.vibrate){try{navigator.vibrate(p)}catch(e){}}}
 const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';
 const BFONT='system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 function shade(hex,p){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;if(p>=0){r+=(255-r)*p;g+=(255-g)*p;b+=(255-b)*p}else{r*=1+p;g*=1+p;b*=1+p}return`rgb(${r|0},${g|0},${b|0})`}
@@ -944,7 +958,7 @@ function damagePlayer(d,o={}){
   if(o.contact&&P.whirlT>0)return false;
   if(P.shieldT>0){P.iframe=.3;ringFx(P.x,P.y,'127,231,255',40,.3,4);return false}
   if(bossE&&run&&run.bstat)run.bstat.hits++;
-  d*=P.armorM*D.dmg*(1+.15*(stage-1));P.hp-=d;P.hurtAt=runT;P.iframe=.7*D.iframe;P.hurtT=.25;addShake(10);flashA=.3;flashCol='255,50,80';sfx.hurt();addNum(P.x,P.y-34,'-'+Math.round(d),true,'#ff6b7f');
+  buzz(40);d*=P.armorM*D.dmg*(1+.15*(stage-1));P.hp-=d;P.hurtAt=runT;P.iframe=.7*D.iframe;P.hurtT=.25;addShake(10);flashA=.3;flashCol='255,50,80';sfx.hurt();addNum(P.x,P.y-34,'-'+Math.round(d),true,'#ff6b7f');
   if(P.hp<=0)playerDown();
   return true;
 }
@@ -1120,11 +1134,12 @@ function updateProjs(dt){
 function dash(){
   if(state!=='play'||P.dashCd>0||P.dashT>0)return;
   let dx=P.lastDx,dy=P.lastDy;const l=Math.hypot(dx,dy);if(l<.1){dx=0;dy=-1}else{dx/=l;dy/=l}
-  P.ddx=dx;P.ddy=dy;P.dashT=.14;P.parryWin=.24;P.dashCd=P.dashMax;P.iframe=Math.max(P.iframe,.34);sfx.dash();
+  buzz(12);P.ddx=dx;P.ddy=dy;P.dashT=.14;P.parryWin=.24;P.dashCd=P.dashMax;P.iframe=Math.max(P.iframe,.34);sfx.dash();
   if(P.re.has('hourglass')){tTarget=.35;tHold=.9}
   if(P.re.has('drum'))P.drumT=2.5;
   if(P.re.has('boots')){forNear(P.x,P.y,150,e=>{if(hittable(e)&&(e.x-P.x)**2+(e.y-P.y)**2<150*150){boltFx(P.x,P.y,e.x,e.y,'#ffe066',3);hurt(e,baseDmg()*3,{col:'#ffe066'})}});ringFx(P.x,P.y,'255,230,100',150,.3,4);sfx.zap()}
 }
+function autoSkill(){if(!OPT.auto||state!=='play'||P.skCd>0)return;if(bossE||miniE){useSkill();return}let n=0;forNear(P.x,P.y,240,e=>{if(hittable(e)&&(e.x-P.x)**2+(e.y-P.y)**2<240*240)n++});if(n>=6)useSkill()}
 function useSkill(){
   if(state!=='play'||P.skCd>0)return;
   const C=CLASSES[P.cls],pw=lv('power');P.skCd=P.skMax;sfx.skill();
@@ -1375,6 +1390,7 @@ function update(dt){
   P.onIce=false;
   const mv=Math.hypot(P.x-ox,P.y-oy)/Math.max(dt,1e-4);P.moveAmt+=(mv-P.moveAmt)*Math.min(1,dt*10);P.walk+=Math.hypot(P.x-ox,P.y-oy)*.08+dt*4;
   P.iframe-=dt;P.parryWin-=dt;P.parryT-=dt;P.pull=Math.max(0,P.pull-dt*8);P.shieldT-=dt;P.rapidT-=dt;P.stormT-=dt;P.magnetT-=dt;P.slowT-=dt;P.hurtT-=dt;P.dashCd-=dt;P.skCd-=dt;
+  autoSkill();
   P.powS+=(curPow()/P.basePow-P.powS)*Math.min(1,dt*.25);
   if(P.regenL){P.regenT+=dt;if(P.regenT>=3/P.regenL){P.regenT=0;heal(1,true)}}
   if(P.re.has('spring')){P.sprT=(P.sprT||0)+dt;if(P.sprT>=2.5){P.sprT=0;heal(1,true)}}
@@ -1519,7 +1535,7 @@ function updateFx(dt){
   shake*=Math.exp(-7*dt);shakeT+=dt;shakeCd-=dt;flashA=Math.max(0,flashA-dt*1.8);
 }
 
-function parry(b){if(run){run.parries++;if(run.parries>=10)ach('parry10');if(run.parries>=15&&P.cls==='berserker'&&run.mode!=='daily')ach('wberserker2');if(bossE&&run.bstat)run.bstat.parries++}heal(Math.max(4,Math.round(P.maxHp*.05))/Math.min(1,D.heal));P.dashCd=Math.max(0,P.dashCd-P.dashMax*.6);if(P.re.has('charm')){heal(6);P.dashCd=0}P.skCd=Math.max(0,P.skCd-P.skMax*.4);P.parryT=3;P.iframe=Math.max(P.iframe,.35);tTarget=.15;tHold=.12;pop('Parry!',P.x,P.y-60,'#ff6bd6',32);spark(b.x,b.y,'#ff9be6',18,300,.45,3);ringFx(b.x,b.y,'255,107,214',40,.3,5);sfx.parry()}
+function parry(b){buzz([12,30,12]);if(run){run.parries++;if(run.parries>=10)ach('parry10');if(run.parries>=15&&P.cls==='berserker'&&run.mode!=='daily')ach('wberserker2');if(bossE&&run.bstat)run.bstat.parries++}heal(Math.max(4,Math.round(P.maxHp*.05))/Math.min(1,D.heal));P.dashCd=Math.max(0,P.dashCd-P.dashMax*.6);if(P.re.has('charm')){heal(6);P.dashCd=0}P.skCd=Math.max(0,P.skCd-P.skMax*.4);P.parryT=3;P.iframe=Math.max(P.iframe,.35);tTarget=.15;tHold=.12;pop('Parry!',P.x,P.y-60,'#ff6bd6',32);spark(b.x,b.y,'#ff9be6',18,300,.45,3);ringFx(b.x,b.y,'255,107,214',40,.3,5);sfx.parry()}
 
 /* ================= score & gold ================= */
 function addScore(v,part){score+=v;if(run){run.parts[part]=(run.parts[part]||0)+v}}
@@ -3120,10 +3136,16 @@ function frame(now){
 
 /* ================= input ================= */
 const stageEl=$('#stage');let drag=null,lastTap=0,lastTapX=0,lastTapY=0;
+let lastFlick=0;
 stageEl.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;audioInit();if(state!=='play')return;
+  if(drag&&e.pointerId!==drag.id){dash();return}
   const now=performance.now();if(now-lastTap<280&&Math.hypot(e.clientX-lastTapX,e.clientY-lastTapY)<60*VS)dash();lastTap=now;lastTapX=e.clientX;lastTapY=e.clientY;
-  if(!drag){drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{stageEl.setPointerCapture(e.pointerId)}catch(_){}}});
-stageEl.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||state!=='play')return;const dx=(e.clientX-drag.x)/VS,dy=(e.clientY-drag.y)/VS;drag.x=e.clientX;drag.y=e.clientY;P.tx+=dx*1.35;P.ty+=dy*1.35});
+  if(!drag){drag={id:e.pointerId,x:e.clientX,y:e.clientY,s:[{t:now,x:e.clientX,y:e.clientY}]};try{stageEl.setPointerCapture(e.pointerId)}catch(_){}}});
+stageEl.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||state!=='play')return;const dx=(e.clientX-drag.x)/VS,dy=(e.clientY-drag.y)/VS;drag.x=e.clientX;drag.y=e.clientY;P.tx+=dx*1.35;P.ty+=dy*1.35;
+  // a fast flick of the dragging finger dashes in the flick's direction
+  if(!OPT.flick||e.pointerType==='mouse')return;const now=performance.now();drag.s.push({t:now,x:e.clientX,y:e.clientY});while(drag.s.length>2&&now-drag.s[0].t>90)drag.s.shift();
+  const a=drag.s[0],fx=e.clientX-a.x,fy=e.clientY-a.y,dist=Math.hypot(fx,fy)/VS,dt=Math.max(16,now-a.t);
+  if(now-lastFlick>320&&dist>45&&dist/dt>1.8){lastFlick=now;P.lastDx=fx;P.lastDy=fy;dash();drag.s=[{t:now,x:e.clientX,y:e.clientY}]}});
 const endDrag=e=>{if(drag&&e.pointerId===drag.id)drag=null};stageEl.addEventListener('pointerup',endDrag);stageEl.addEventListener('pointercancel',endDrag);
 for(const [id,fn] of[['btnDash',()=>dash()],['btnSkill',()=>useSkill()]]){const b=$('#'+id);b.tabIndex=-1;b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();audioInit();fn()})}
 const KM={arrowleft:'l',a:'l',arrowright:'r',d:'r',arrowup:'u',w:'u',arrowdown:'d',s:'d'};
@@ -3153,6 +3175,8 @@ const shakeLbl=()=>{$('#btnShake').textContent='Screen shake: '+(shakeOn?'On':'O
 $('#btnShake').onclick=()=>{shakeOn=!shakeOn;shake=0;shakeLbl();try{STORE.set('vg_shake',shakeOn?'on':'off')}catch(e){}};
 const musLbl=()=>{$('#btnMusic').textContent='Music: '+(MU.on?'On':'Off')};musLbl();
 $('#btnMusic').onclick=()=>{MU.on=!MU.on;musLbl();try{STORE.set('vg_music',MU.on?'on':'off')}catch(e){}};
+const optLbl=()=>{$('#btnFlick').textContent='Flick to dash: '+(OPT.flick?'On':'Off');$('#btnAuto').textContent='Auto skill: '+(OPT.auto?'On':'Off');$('#btnSide').textContent='Buttons: '+(OPT.left?'Left':'Right');$('#btnBuzz').textContent='Vibration: '+(OPT.buzz?'On':'Off');$('#acts').classList.toggle('left',OPT.left)};optLbl();
+for(const [id,k] of[['btnFlick','flick'],['btnAuto','auto'],['btnSide','left'],['btnBuzz','buzz']])$('#'+id).onclick=()=>{OPT[k]=!OPT[k];saveOpts();optLbl();if(k==='buzz')buzz(30)};
 $('#btnReroll').onclick=reroll;$('#btnSkip').onclick=skipCard;
 $('#btnPause').onclick=()=>{state==='play'?pause():resume()};
 $('#btnMute').onclick=()=>{muted=!muted;$('#wav').style.display=muted?'none':'';try{STORE.set('vg_mute',muted?'1':'0')}catch(e){}};
@@ -3192,5 +3216,6 @@ function drawCarrier(e){const x=e.x,y=e.y,K=e.phase===1?1:e.phase===2?'A':'B';ct
   ctx.restore()}
 </script>
 
+<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(function(){});</script>
 </body>
 </html>

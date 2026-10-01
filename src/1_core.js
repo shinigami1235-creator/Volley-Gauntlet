@@ -8,6 +8,9 @@ const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Saves use browser storage when the host allows it. In a sandboxed player without storage, everything is kept in memory for the session. */
 const STORE=(()=>{const mem=new Map();let ls=null;try{ls=window.localStorage;ls.setItem('vg_probe','1');ls.removeItem('vg_probe')}catch(e){ls=null}
   return{get(k){if(ls){try{return ls.getItem(k)}catch(e){}}return mem.has(k)?mem.get(k):null},set(k,v){mem.set(k,String(v));if(ls){try{ls.setItem(k,String(v))}catch(e){}}}}})();
+const OPT=(()=>{let o={};try{o=JSON.parse(STORE.get('vg_opts')||'{}')||{}}catch(e){o={}}return Object.assign({flick:true,auto:false,left:false,buzz:true},o)})();
+function saveOpts(){STORE.set('vg_opts',JSON.stringify(OPT))}
+function buzz(p){if(OPT.buzz&&navigator.vibrate){try{navigator.vibrate(p)}catch(e){}}}
 const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';
 const BFONT='system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 function shade(hex,p){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;if(p>=0){r+=(255-r)*p;g+=(255-g)*p;b+=(255-b)*p}else{r*=1+p;g*=1+p;b*=1+p}return`rgb(${r|0},${g|0},${b|0})`}

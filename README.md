@@ -6,12 +6,16 @@ Volley Gauntlet is an arcade roguelite built from the fake gameplay you see in m
 
 Play it at https://shinigami1235-creator.github.io/Volley-Gauntlet/ or download `index.html` and open it in any browser.
 
+## Install it as an app
+
+On Android, open the link in Chrome and tap Install app (or Add to Home screen from the ⋮ menu). On iPhone, open it in Safari, tap Share and then Add to Home Screen. On a computer, Chrome and Edge show an install button in the address bar. Once it's installed it runs full screen and works offline.
+
 ## How to play
 
 | Action | Keyboard | Touch | Gamepad |
 | --- | --- | --- | --- |
 | Move | WASD or arrow keys | Drag anywhere | Left stick |
-| Dash | Space or Shift | Double-tap | A |
+| Dash | Space or Shift | Flick your dragging finger, tap a second finger, or double-tap | A |
 | Class skill | E or Q | Skill button | X or B |
 | Pause | P or Esc | Pause button | Start |
 
@@ -19,6 +23,7 @@ Play it at https://shinigami1235-creator.github.io/Volley-Gauntlet/ or download 
 - Shoot a gold-rimmed gate to raise its number before you walk through it.
 - Dash into pink shots to parry them. A parry heals you, recharges your class skill and gives back most of your dash.
 - Beat the mini-boss halfway through a stage for a relic and a visit from the wandering merchant.
+- The pause menu has phone settings: flick to dash, auto skill, which side the buttons sit on, and vibration.
 
 ## What's in it
 
@@ -35,8 +40,10 @@ Progress saves in your browser. Some game sites don't keep browser saves, so the
 The game is split into parts in `src/` and joined into one file by `build.py`. The music samples in `music/mp3/` get embedded as base64.
 
 ```
-python build.py index.html
+python build.py index.html --pwa
 ```
+
+`--pwa` adds the links to `manifest.webmanifest`, `sw.js` and the `icons/` folder for the installable version. Leave it off for sites that only take one self-contained file, such as Nioret World. Bump `CACHE_VERSION` in `sw.js` whenever you push a new build, since that's what makes installed copies update.
 
 The build checks that the file starts with `<!doctype html>` and stays under 2 MiB.
 

@@ -419,10 +419,16 @@ function frame(now){
 
 /* ================= input ================= */
 const stageEl=$('#stage');let drag=null,lastTap=0,lastTapX=0,lastTapY=0;
+let lastFlick=0;
 stageEl.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;audioInit();if(state!=='play')return;
+  if(drag&&e.pointerId!==drag.id){dash();return}
   const now=performance.now();if(now-lastTap<280&&Math.hypot(e.clientX-lastTapX,e.clientY-lastTapY)<60*VS)dash();lastTap=now;lastTapX=e.clientX;lastTapY=e.clientY;
-  if(!drag){drag={id:e.pointerId,x:e.clientX,y:e.clientY};try{stageEl.setPointerCapture(e.pointerId)}catch(_){}}});
-stageEl.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||state!=='play')return;const dx=(e.clientX-drag.x)/VS,dy=(e.clientY-drag.y)/VS;drag.x=e.clientX;drag.y=e.clientY;P.tx+=dx*1.35;P.ty+=dy*1.35});
+  if(!drag){drag={id:e.pointerId,x:e.clientX,y:e.clientY,s:[{t:now,x:e.clientX,y:e.clientY}]};try{stageEl.setPointerCapture(e.pointerId)}catch(_){}}});
+stageEl.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||state!=='play')return;const dx=(e.clientX-drag.x)/VS,dy=(e.clientY-drag.y)/VS;drag.x=e.clientX;drag.y=e.clientY;P.tx+=dx*1.35;P.ty+=dy*1.35;
+  // a fast flick of the dragging finger dashes in the flick's direction
+  if(!OPT.flick||e.pointerType==='mouse')return;const now=performance.now();drag.s.push({t:now,x:e.clientX,y:e.clientY});while(drag.s.length>2&&now-drag.s[0].t>90)drag.s.shift();
+  const a=drag.s[0],fx=e.clientX-a.x,fy=e.clientY-a.y,dist=Math.hypot(fx,fy)/VS,dt=Math.max(16,now-a.t);
+  if(now-lastFlick>320&&dist>45&&dist/dt>1.8){lastFlick=now;P.lastDx=fx;P.lastDy=fy;dash();drag.s=[{t:now,x:e.clientX,y:e.clientY}]}});
 const endDrag=e=>{if(drag&&e.pointerId===drag.id)drag=null};stageEl.addEventListener('pointerup',endDrag);stageEl.addEventListener('pointercancel',endDrag);
 for(const [id,fn] of[['btnDash',()=>dash()],['btnSkill',()=>useSkill()]]){const b=$('#'+id);b.tabIndex=-1;b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();audioInit();fn()})}
 const KM={arrowleft:'l',a:'l',arrowright:'r',d:'r',arrowup:'u',w:'u',arrowdown:'d',s:'d'};
@@ -452,6 +458,8 @@ const shakeLbl=()=>{$('#btnShake').textContent='Screen shake: '+(shakeOn?'On':'O
 $('#btnShake').onclick=()=>{shakeOn=!shakeOn;shake=0;shakeLbl();try{STORE.set('vg_shake',shakeOn?'on':'off')}catch(e){}};
 const musLbl=()=>{$('#btnMusic').textContent='Music: '+(MU.on?'On':'Off')};musLbl();
 $('#btnMusic').onclick=()=>{MU.on=!MU.on;musLbl();try{STORE.set('vg_music',MU.on?'on':'off')}catch(e){}};
+const optLbl=()=>{$('#btnFlick').textContent='Flick to dash: '+(OPT.flick?'On':'Off');$('#btnAuto').textContent='Auto skill: '+(OPT.auto?'On':'Off');$('#btnSide').textContent='Buttons: '+(OPT.left?'Left':'Right');$('#btnBuzz').textContent='Vibration: '+(OPT.buzz?'On':'Off');$('#acts').classList.toggle('left',OPT.left)};optLbl();
+for(const [id,k] of[['btnFlick','flick'],['btnAuto','auto'],['btnSide','left'],['btnBuzz','buzz']])$('#'+id).onclick=()=>{OPT[k]=!OPT[k];saveOpts();optLbl();if(k==='buzz')buzz(30)};
 $('#btnReroll').onclick=reroll;$('#btnSkip').onclick=skipCard;
 $('#btnPause').onclick=()=>{state==='play'?pause():resume()};
 $('#btnMute').onclick=()=>{muted=!muted;$('#wav').style.display=muted?'none':'';try{STORE.set('vg_mute',muted?'1':'0')}catch(e){}};
