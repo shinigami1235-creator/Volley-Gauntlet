@@ -8,7 +8,7 @@ Play it at https://shinigami1235-creator.github.io/Volley-Gauntlet/ or download 
 
 ## Install it as an app
 
-On Android, open the link in Chrome and tap Install app (or Add to Home screen from the ⋮ menu). On iPhone, open it in Safari, tap Share and then Add to Home Screen. On a computer, Chrome and Edge show an install button in the address bar. Once it's installed it runs full screen and works offline.
+The title screen has an Install app button when your browser can install it. On Android phones and tablets, open the link in Chrome and tap that button (or Add to Home screen from the ⋮ menu). On iPhone, open it in Safari, tap Share and then Add to Home Screen. On a computer, Chrome and Edge show an install button in the address bar. Once it's installed it runs full screen and works offline.
 
 ## How to play
 

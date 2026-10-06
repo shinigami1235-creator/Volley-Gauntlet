@@ -268,6 +268,7 @@ body{font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-
       </div>
       <button class="btn" id="btnPlay">Play</button>
       <div class="row menu"><button class="btn alt sm" id="btnForge">Forge</button><button class="btn alt sm" id="btnCodex">Codex</button><button class="btn alt sm" id="btnSave">Save code</button></div>
+      <div class="row" id="installRow" hidden><button class="btn sm" id="btnInstall">Install app</button></div>
       <div class="best" id="bestT"></div>
       <div class="keys">Keyboard: WASD or arrow keys to move, Space to dash, E for your class skill, P to pause. In menus, arrow keys pick and Enter confirms.<br>Touch: drag to move, and flick or tap a second finger to dash. A gamepad works too.</div>
       <div class="keys cred">Music is played live from FluidR3 GM instrument samples (MIT licence).</div>
@@ -3177,6 +3178,16 @@ const musLbl=()=>{$('#btnMusic').textContent='Music: '+(MU.on?'On':'Off')};musLb
 $('#btnMusic').onclick=()=>{MU.on=!MU.on;musLbl();try{STORE.set('vg_music',MU.on?'on':'off')}catch(e){}};
 const optLbl=()=>{$('#btnFlick').textContent='Flick to dash: '+(OPT.flick?'On':'Off');$('#btnAuto').textContent='Auto skill: '+(OPT.auto?'On':'Off');$('#btnSide').textContent='Buttons: '+(OPT.left?'Left':'Right');$('#btnBuzz').textContent='Vibration: '+(OPT.buzz?'On':'Off');$('#acts').classList.toggle('left',OPT.left)};optLbl();
 for(const [id,k] of[['btnFlick','flick'],['btnAuto','auto'],['btnSide','left'],['btnBuzz','buzz']])$('#'+id).onclick=()=>{OPT[k]=!OPT[k];saveOpts();optLbl();if(k==='buzz')buzz(30)};
+/* install as an app: Chrome and Edge fire beforeinstallprompt, iPhone and iPad need the Share menu */
+let installEv=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function showInstall(){$('#installRow').hidden=isStandalone()||!(installEv||(isIOS&&location.protocol==='https:'))}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;showInstall()});
+addEventListener('appinstalled',()=>{installEv=null;showInstall();toast('Installed<small>Open Volley Gauntlet from your home screen.</small>')});
+$('#btnInstall').onclick=async()=>{if(installEv){const ev=installEv;installEv=null;ev.prompt();try{await ev.userChoice}catch(e){}showInstall();return}
+  if(isIOS)ovX('Install on iPhone or iPad','In Safari, tap the Share button, then Add to Home Screen. It has to be Safari, since other iPhone browsers can\'t install apps.','',[{l:'Back',alt:true,f:toMenu}])};
+showInstall();
 $('#btnReroll').onclick=reroll;$('#btnSkip').onclick=skipCard;
 $('#btnPause').onclick=()=>{state==='play'?pause():resume()};
 $('#btnMute').onclick=()=>{muted=!muted;$('#wav').style.display=muted?'none':'';try{STORE.set('vg_mute',muted?'1':'0')}catch(e){}};

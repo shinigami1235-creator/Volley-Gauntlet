@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION on every deploy, since this is what makes installed copies pick up the new build.
-const CACHE_VERSION = 'vg-v1';
+const CACHE_VERSION = 'vg-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
