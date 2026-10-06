@@ -3185,10 +3185,12 @@ addEventListener('pointerdown',goFull,true);
 let installEv=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-function showInstall(){$('#installRow').hidden=isStandalone()||!(installEv||(isIOS&&location.protocol==='https:'))}
+const isAndroid=/Android/.test(navigator.userAgent);
+function showInstall(){$('#installRow').hidden=isStandalone()||!(installEv||((isIOS||isAndroid)&&location.protocol==='https:'))}
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;showInstall()});
 addEventListener('appinstalled',()=>{installEv=null;showInstall();toast('Installed<small>Open Volley Gauntlet from your home screen.</small>')});
 $('#btnInstall').onclick=async()=>{if(installEv){const ev=installEv;installEv=null;ev.prompt();try{await ev.userChoice}catch(e){}showInstall();return}
+  if(isAndroid){ovX('Install on Android','Open Chrome\'s ⋮ menu and tap Install app or Add to Home screen. If the menu says Open in app, the game is still installed. Uninstall it from Settings, Apps, Volley Gauntlet, then reload this page.','',[{l:'Back',alt:true,f:toMenu}]);return}
   if(isIOS)ovX('Install on iPhone or iPad','In Safari, tap the Share button, then Add to Home Screen. It has to be Safari, since other iPhone browsers can\'t install apps.','',[{l:'Back',alt:true,f:toMenu}])};
 showInstall();
 $('#btnReroll').onclick=reroll;$('#btnSkip').onclick=skipCard;
