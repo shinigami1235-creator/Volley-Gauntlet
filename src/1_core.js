@@ -8,7 +8,7 @@ const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Saves use browser storage when the host allows it. In a sandboxed player without storage, everything is kept in memory for the session. */
 const STORE=(()=>{const mem=new Map();let ls=null;try{ls=window.localStorage;ls.setItem('vg_probe','1');ls.removeItem('vg_probe')}catch(e){ls=null}
   return{get(k){if(ls){try{return ls.getItem(k)}catch(e){}}return mem.has(k)?mem.get(k):null},set(k,v){mem.set(k,String(v));if(ls){try{ls.setItem(k,String(v))}catch(e){}}}}})();
-const OPT=(()=>{let o={};try{o=JSON.parse(STORE.get('vg_opts')||'{}')||{}}catch(e){o={}}return Object.assign({flick:true,auto:false,left:false,buzz:true},o)})();
+const OPT=(()=>{let o={};try{o=JSON.parse(STORE.get('vg_opts')||'{}')||{}}catch(e){o={}}return Object.assign({flick:true,auto:false,left:false,buzz:true,full:true},o)})();
 function saveOpts(){STORE.set('vg_opts',JSON.stringify(OPT))}
 function buzz(p){if(OPT.buzz&&navigator.vibrate){try{navigator.vibrate(p)}catch(e){}}}
 const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';

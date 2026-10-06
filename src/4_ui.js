@@ -458,8 +458,11 @@ const shakeLbl=()=>{$('#btnShake').textContent='Screen shake: '+(shakeOn?'On':'O
 $('#btnShake').onclick=()=>{shakeOn=!shakeOn;shake=0;shakeLbl();try{STORE.set('vg_shake',shakeOn?'on':'off')}catch(e){}};
 const musLbl=()=>{$('#btnMusic').textContent='Music: '+(MU.on?'On':'Off')};musLbl();
 $('#btnMusic').onclick=()=>{MU.on=!MU.on;musLbl();try{STORE.set('vg_music',MU.on?'on':'off')}catch(e){}};
-const optLbl=()=>{$('#btnFlick').textContent='Flick to dash: '+(OPT.flick?'On':'Off');$('#btnAuto').textContent='Auto skill: '+(OPT.auto?'On':'Off');$('#btnSide').textContent='Buttons: '+(OPT.left?'Left':'Right');$('#btnBuzz').textContent='Vibration: '+(OPT.buzz?'On':'Off');$('#acts').classList.toggle('left',OPT.left)};optLbl();
-for(const [id,k] of[['btnFlick','flick'],['btnAuto','auto'],['btnSide','left'],['btnBuzz','buzz']])$('#'+id).onclick=()=>{OPT[k]=!OPT[k];saveOpts();optLbl();if(k==='buzz')buzz(30)};
+const canFull=!!(document.documentElement.requestFullscreen&&document.fullscreenEnabled);
+function goFull(){if(!canFull||!OPT.full||document.fullscreenElement||!isStandalone())return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}
+const optLbl=()=>{$('#btnFull').hidden=!canFull;$('#btnFull').textContent='Full screen: '+(OPT.full?'On':'Off');$('#btnFlick').textContent='Flick to dash: '+(OPT.flick?'On':'Off');$('#btnAuto').textContent='Auto skill: '+(OPT.auto?'On':'Off');$('#btnSide').textContent='Buttons: '+(OPT.left?'Left':'Right');$('#btnBuzz').textContent='Vibration: '+(OPT.buzz?'On':'Off');$('#acts').classList.toggle('left',OPT.left)};optLbl();
+for(const [id,k] of[['btnFlick','flick'],['btnAuto','auto'],['btnSide','left'],['btnBuzz','buzz'],['btnFull','full']])$('#'+id).onclick=()=>{OPT[k]=!OPT[k];saveOpts();optLbl();if(k==='buzz')buzz(30);if(k==='full'){if(OPT.full)goFull();else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}};
+addEventListener('pointerdown',goFull,true);
 /* install as an app: Chrome and Edge fire beforeinstallprompt, iPhone and iPad need the Share menu */
 let installEv=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;
@@ -475,6 +478,11 @@ $('#btnPause').onclick=()=>{state==='play'?pause():resume()};
 $('#btnMute').onclick=()=>{muted=!muted;$('#wav').style.display=muted?'none':'';try{STORE.set('vg_mute',muted?'1':'0')}catch(e){}};
 try{if(STORE.get('vg_mute')==='1'){muted=true;$('#wav').style.display='none'}}catch(e){}
 addEventListener('resize',resize);
+// tablets change the window size after launch and on rotation, so re-measure a few times
+const reMeasure=()=>{resize();setTimeout(resize,150);setTimeout(resize,500)};
+addEventListener('orientationchange',reMeasure);document.addEventListener('fullscreenchange',reMeasure);
+if(window.visualViewport)visualViewport.addEventListener('resize',resize);
+addEventListener('pageshow',reMeasure);
 
 /* ================= boot ================= */
 loadSave();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
