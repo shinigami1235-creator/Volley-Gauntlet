@@ -15,7 +15,16 @@ const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';
 const BFONT='system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 function shade(hex,p){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;if(p>=0){r+=(255-r)*p;g+=(255-g)*p;b+=(255-b)*p}else{r*=1+p;g*=1+p;b*=1+p}return`rgb(${r|0},${g|0},${b|0})`}
 function fmt(n){n=Math.round(n);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':String(n)}
-function mk(w,h,fn){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));fn(c.getContext('2d'),c.width,c.height);return c}
+// Every cached image is made here. Android Chrome can wipe these when the app is in the background or short on memory,
+// so each one keeps its paint function and gets repainted when that happens.
+const MKS=new Set();
+function mk(w,h,fn){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));fn(c.getContext('2d'),c.width,c.height);c._fn=fn;MKS.add(typeof WeakRef==='function'?new WeakRef(c):{deref:()=>c});c.addEventListener('contextrestored',()=>repaint(c));return c}
+function repaint(c){const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';g.clearRect(0,0,c.width,c.height);c._fn(g,c.width,c.height)}
+function repaintAll(){for(const r of MKS){const c=r.deref();if(!c){MKS.delete(r);continue}try{repaint(c)}catch(e){}}}
+// A test image made a few seconds ago. If it reads back empty, the cached images were wiped in between.
+// It's read only once and then replaced, since Chrome stops using the graphics card for images that get read often.
+let canary=null;function newCanary(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,64,64);return c}
+function canaryOk(){let ok=true;try{if(canary)ok=canary.getContext('2d').getImageData(32,32,1,1).data[3]===255}catch(e){}canary=newCanary();return ok}
 function flashOf(c){return mk(c.width,c.height,g=>{g.drawImage(c,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height)})}
 function wpick(o){let t=0;for(const k in o)t+=o[k];let r=Math.random()*t;for(const k in o){r-=o[k];if(r<=0)return k}return Object.keys(o)[0]}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}

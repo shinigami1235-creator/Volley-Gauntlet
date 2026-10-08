@@ -523,7 +523,10 @@ function update(dt){
   const spd=440*P.spdM*(P.whirlT>0?1.3:1)*(P.slowT>0?.55:1);
   let kx=(keys.r?1:0)-(keys.l?1:0),ky=(keys.d?1:0)-(keys.u?1:0);if(!kx&&!ky&&(pad.ax||pad.ay)){kx=pad.ax;ky=pad.ay}
   if(kx||ky){const l=Math.hypot(kx,ky),m=Math.min(1,l);P.tx=P.x+kx/l*40*m;P.ty=P.y+ky/l*40*m}
-  if(BIOME==='sky'&&!bossE){const w=run.wind;w.t-=dt;if(w.t<=0&&w.left<=0){w.left=3;w.dir=pick([-1,1]);w.t=rnd(7,10);pop(w.dir>0?'Wind →':'← Wind',W/2,ZTOP-40,'#dfe6f2',24)}if(w.left>0){w.left-=dt;P.tx+=w.dir*130*dt;if(Math.random()<.6)parts.push({k:0,x:w.dir>0?L:R,y:rnd(0,H),vx:w.dir*rnd(500,700),vy:0,l:.8,m:.8,s:2,c:'rgba(230,240,255,.8)'})}}
+  if(BIOME==='sky'&&!bossE){const w=run.wind;
+    if(w.left>0){w.left-=dt;P.tx+=w.dir*100*dt;if(Math.random()<.8)parts.push({k:0,x:w.dir>0?L:R,y:rnd(0,H),vx:w.dir*rnd(500,700),vy:0,l:.8,m:.8,s:2,c:'rgba(230,240,255,.8)'})}
+    else{w.t-=dt;if(w.t<=1.2&&!w.warn){w.warn=1;w.dir=pick([-1,1]);pop(w.dir>0?'Wind coming →':'← Wind coming',W/2,ZTOP-40,'#dfe6f2',26)}
+      if(w.t<=0){w.left=3;w.warn=0;w.t=rnd(7,10)}}}
   if(P.poisT>0){P.poisT-=dt;dotPlayer(5*dt);if(Math.random()<dt*8)spark(P.x+rnd(-8,8),P.y,'#a6e85f',1,40,.4,3)}
   P.tx=clamp(P.tx,L+P.r+2+squeeze,R-P.r-2-squeeze);P.ty=clamp(P.ty,ZTOP,ZBOT);
   const ox=P.x,oy=P.y;

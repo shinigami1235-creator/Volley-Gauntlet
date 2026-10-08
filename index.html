@@ -345,7 +345,16 @@ const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';
 const BFONT='system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 function shade(hex,p){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;if(p>=0){r+=(255-r)*p;g+=(255-g)*p;b+=(255-b)*p}else{r*=1+p;g*=1+p;b*=1+p}return`rgb(${r|0},${g|0},${b|0})`}
 function fmt(n){n=Math.round(n);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':String(n)}
-function mk(w,h,fn){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));fn(c.getContext('2d'),c.width,c.height);return c}
+// Every cached image is made here. Android Chrome can wipe these when the app is in the background or short on memory,
+// so each one keeps its paint function and gets repainted when that happens.
+const MKS=new Set();
+function mk(w,h,fn){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));fn(c.getContext('2d'),c.width,c.height);c._fn=fn;MKS.add(typeof WeakRef==='function'?new WeakRef(c):{deref:()=>c});c.addEventListener('contextrestored',()=>repaint(c));return c}
+function repaint(c){const g=c.getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';g.clearRect(0,0,c.width,c.height);c._fn(g,c.width,c.height)}
+function repaintAll(){for(const r of MKS){const c=r.deref();if(!c){MKS.delete(r);continue}try{repaint(c)}catch(e){}}}
+// A test image made a few seconds ago. If it reads back empty, the cached images were wiped in between.
+// It's read only once and then replaced, since Chrome stops using the graphics card for images that get read often.
+let canary=null;function newCanary(){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,64,64);return c}
+function canaryOk(){let ok=true;try{if(canary)ok=canary.getContext('2d').getImageData(32,32,1,1).data[3]===255}catch(e){}canary=newCanary();return ok}
 function flashOf(c){return mk(c.width,c.height,g=>{g.drawImage(c,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height)})}
 function wpick(o){let t=0;for(const k in o)t+=o[k];let r=Math.random()*t;for(const k in o){r-=o[k];if(r<=0)return k}return Object.keys(o)[0]}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -1381,7 +1390,10 @@ function update(dt){
   const spd=440*P.spdM*(P.whirlT>0?1.3:1)*(P.slowT>0?.55:1);
   let kx=(keys.r?1:0)-(keys.l?1:0),ky=(keys.d?1:0)-(keys.u?1:0);if(!kx&&!ky&&(pad.ax||pad.ay)){kx=pad.ax;ky=pad.ay}
   if(kx||ky){const l=Math.hypot(kx,ky),m=Math.min(1,l);P.tx=P.x+kx/l*40*m;P.ty=P.y+ky/l*40*m}
-  if(BIOME==='sky'&&!bossE){const w=run.wind;w.t-=dt;if(w.t<=0&&w.left<=0){w.left=3;w.dir=pick([-1,1]);w.t=rnd(7,10);pop(w.dir>0?'Wind →':'← Wind',W/2,ZTOP-40,'#dfe6f2',24)}if(w.left>0){w.left-=dt;P.tx+=w.dir*130*dt;if(Math.random()<.6)parts.push({k:0,x:w.dir>0?L:R,y:rnd(0,H),vx:w.dir*rnd(500,700),vy:0,l:.8,m:.8,s:2,c:'rgba(230,240,255,.8)'})}}
+  if(BIOME==='sky'&&!bossE){const w=run.wind;
+    if(w.left>0){w.left-=dt;P.tx+=w.dir*100*dt;if(Math.random()<.8)parts.push({k:0,x:w.dir>0?L:R,y:rnd(0,H),vx:w.dir*rnd(500,700),vy:0,l:.8,m:.8,s:2,c:'rgba(230,240,255,.8)'})}
+    else{w.t-=dt;if(w.t<=1.2&&!w.warn){w.warn=1;w.dir=pick([-1,1]);pop(w.dir>0?'Wind coming →':'← Wind coming',W/2,ZTOP-40,'#dfe6f2',26)}
+      if(w.t<=0){w.left=3;w.warn=0;w.t=rnd(7,10)}}}
   if(P.poisT>0){P.poisT-=dt;dotPlayer(5*dt);if(Math.random()<dt*8)spark(P.x+rnd(-8,8),P.y,'#a6e85f',1,40,.4,3)}
   P.tx=clamp(P.tx,L+P.r+2+squeeze,R-P.r-2-squeeze);P.ty=clamp(P.ty,ZTOP,ZBOT);
   const ox=P.x,oy=P.y;
@@ -2733,7 +2745,7 @@ function render(){
   drawDecor();
   if(['title','class','forge','codex','save'].includes(state)){drawTorchLight();ctx.restore();drawVignette();return}
   if(flood)drawFlood();
-  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawPickups();drawEnemies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();
+  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawPickups();drawEnemies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();drawWind();
   const dk=darkBoss?1:darkT>0?Math.min(1,darkT,(14-darkT)*2):0;if(dk>0){drawDark(dk);drawZonesFloor();drawZonesTop();drawBullets()}
   ctx.restore();
   drawVignette();
@@ -3202,7 +3214,10 @@ addEventListener('resize',resize);
 const reMeasure=()=>{resize();setTimeout(resize,150);setTimeout(resize,500)};
 addEventListener('orientationchange',reMeasure);document.addEventListener('fullscreenchange',reMeasure);
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
-addEventListener('pageshow',reMeasure);
+addEventListener('pageshow',()=>{reMeasure();repaintAll()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(repaintAll,60)});
+cv.addEventListener('contextrestored',repaintAll);
+setInterval(()=>{if(!document.hidden&&!canaryOk())repaintAll()},3000);
 
 /* ================= boot ================= */
 loadSave();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
@@ -3210,6 +3225,7 @@ state='title';
 setTimeout(()=>$('#btnPlay').focus({preventScroll:true}),100);
 requestAnimationFrame(frame);
 /* ================= v3 drawing ================= */
+function drawWind(){if(BIOME!=='sky'||!run||!run.wind||!(run.wind.left>0))return;const w=run.wind,a=Math.min(1,w.left*2,(3-w.left)*4)*.75;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#e8f0ff';ctx.font='900 30px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';const sh=((runT*120)%60)*w.dir;for(let i=-3;i<=3;i++)ctx.fillText(w.dir>0?'›':'‹',W/2+i*60+sh,ZTOP-70);ctx.restore()}
 function drawWalls(){for(const w of walls){const y=w.y;ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(L,y+10,R-L,6);
   for(const [x0,x1] of[[L,w.gx-w.gw/2],[w.gx+w.gw/2,R]]){if(x1-x0<2)continue;ctx.fillStyle='#4d505c';ctx.fillRect(x0,y-4,x1-x0,8);ctx.fillStyle='#8b8f9e';ctx.fillRect(x0,y-4,x1-x0,2);for(let x=x0+6;x<x1-2;x+=16){ctx.fillStyle='#3a3d48';ctx.fillRect(x-3,y-16,6,32);ctx.fillStyle='#9ea3b3';ctx.fillRect(x-3,y-16,2,32);ctx.fillStyle='#c9cdd8';ctx.beginPath();ctx.moveTo(x-4,y+16);ctx.lineTo(x,y+23);ctx.lineTo(x+4,y+16);ctx.fill()}}
   ctx.strokeStyle='rgba(255,209,102,.5)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(w.gx-w.gw/2,y);ctx.lineTo(w.gx+w.gw/2,y);ctx.stroke();ctx.setLineDash([])}}

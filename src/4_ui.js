@@ -15,7 +15,7 @@ function render(){
   drawDecor();
   if(['title','class','forge','codex','save'].includes(state)){drawTorchLight();ctx.restore();drawVignette();return}
   if(flood)drawFlood();
-  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawPickups();drawEnemies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();
+  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawPickups();drawEnemies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();drawWind();
   const dk=darkBoss?1:darkT>0?Math.min(1,darkT,(14-darkT)*2):0;if(dk>0){drawDark(dk);drawZonesFloor();drawZonesTop();drawBullets()}
   ctx.restore();
   drawVignette();
@@ -484,7 +484,10 @@ addEventListener('resize',resize);
 const reMeasure=()=>{resize();setTimeout(resize,150);setTimeout(resize,500)};
 addEventListener('orientationchange',reMeasure);document.addEventListener('fullscreenchange',reMeasure);
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
-addEventListener('pageshow',reMeasure);
+addEventListener('pageshow',()=>{reMeasure();repaintAll()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(repaintAll,60)});
+cv.addEventListener('contextrestored',repaintAll);
+setInterval(()=>{if(!document.hidden&&!canaryOk())repaintAll()},3000);
 
 /* ================= boot ================= */
 loadSave();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
@@ -492,6 +495,7 @@ state='title';
 setTimeout(()=>$('#btnPlay').focus({preventScroll:true}),100);
 requestAnimationFrame(frame);
 /* ================= v3 drawing ================= */
+function drawWind(){if(BIOME!=='sky'||!run||!run.wind||!(run.wind.left>0))return;const w=run.wind,a=Math.min(1,w.left*2,(3-w.left)*4)*.75;ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#e8f0ff';ctx.font='900 30px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';const sh=((runT*120)%60)*w.dir;for(let i=-3;i<=3;i++)ctx.fillText(w.dir>0?'›':'‹',W/2+i*60+sh,ZTOP-70);ctx.restore()}
 function drawWalls(){for(const w of walls){const y=w.y;ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(L,y+10,R-L,6);
   for(const [x0,x1] of[[L,w.gx-w.gw/2],[w.gx+w.gw/2,R]]){if(x1-x0<2)continue;ctx.fillStyle='#4d505c';ctx.fillRect(x0,y-4,x1-x0,8);ctx.fillStyle='#8b8f9e';ctx.fillRect(x0,y-4,x1-x0,2);for(let x=x0+6;x<x1-2;x+=16){ctx.fillStyle='#3a3d48';ctx.fillRect(x-3,y-16,6,32);ctx.fillStyle='#9ea3b3';ctx.fillRect(x-3,y-16,2,32);ctx.fillStyle='#c9cdd8';ctx.beginPath();ctx.moveTo(x-4,y+16);ctx.lineTo(x,y+23);ctx.lineTo(x+4,y+16);ctx.fill()}}
   ctx.strokeStyle='rgba(255,209,102,.5)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(w.gx-w.gw/2,y);ctx.lineTo(w.gx+w.gw/2,y);ctx.stroke();ctx.setLineDash([])}}
