@@ -50,7 +50,7 @@ function partsDead(b){
 }
 function miniDown(e){
   miniE=null;miniDone=true;$('#bossbox').hidden=true;tTarget=.3;tHold=.7;flashA=.5;flashCol='255,230,160';addShake(16);
-  for(let i=0;i<20;i++)gems.push({x:e.x+rnd(-30,30),y:e.y+rnd(-30,30),v:2,vx:rnd(-220,220),vy:rnd(-160,220),big:1});
+  for(let i=0;i<20;i++)addGem({x:e.x+rnd(-30,30),y:e.y+rnd(-30,30),v:2,vx:rnd(-220,220),vy:rnd(-160,220),big:1});
   run.minis++;addScore(800*stage*P.scoreM,'minis');banner('Relic<small>'+ED[e.type].name+' dropped a relic.</small>','#ffd166');
   zones=zones.filter(z=>!z.boss);
   later(1.1,()=>{if(run.mode!=='rush')resumeFn=merchant;if(state==='play')openRelic();else pendingRelic=true});
@@ -60,7 +60,7 @@ function bossDown(e){
   bossE=null;musSting('ko');$('#bossbox').hidden=true;tTarget=.2;tHold=1.3;flashA=.8;flashCol='255,240,210';addShake(26);zones=zones.filter(z=>!z.boss);ebul.length=0;walls.length=0;
   darkBoss=false;flood=false;bossScrollStop=false;for(const p of e.parts||[])if(p.alive){p.alive=false;spark(p.x,p.y,p.d.col,12,260,.5,3)}
   for(let i=0;i<6;i++)later(i*.11,()=>explode(e.x+rnd(-50,50),e.y+rnd(-40,40),90,1e9,{col:'255,90,60',quiet:true}));
-  for(let i=0;i<40;i++)gems.push({x:e.x+rnd(-40,40),y:e.y+rnd(-40,40),v:3,vx:rnd(-260,260),vy:rnd(-200,260),big:1});
+  for(let i=0;i<40;i++)addGem({x:e.x+rnd(-40,40),y:e.y+rnd(-40,40),v:3,vx:rnd(-260,260),vy:rnd(-200,260),big:1});
   dropPickup(e.x-30,e.y,'heart');dropPickup(e.x+30,e.y);
   addScore(3000*stage*P.scoreM,'bosses');P.rerolls++;
   stage++;stageT=0;bossWarn=false;miniWarn=false;miniDone=false;dir.next=3;dir.seq=[];

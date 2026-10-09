@@ -3,7 +3,7 @@
 let setp=null,walls=[],squeeze=0,darkT=0,darkBoss=false,flood=false,bossScrollStop=false,shrineHold=false,scrollM=1;
 function setPool(){const p={airdrop:1.2,bombrun:1.2,lava:1,shrine:.8,lock:.8,squeeze:.8,dark:.6};const bs=BIOMES[BIOME].set;for(const k in bs)p[k]*=bs[k];if(dm('dark'))p.dark=8;if(stage===1&&stageT<30&&BIOME==='dungeon'){delete p.dark;delete p.squeeze;delete p.lock}return p}
 function endSet(){if(!setp)return;if(setp.k==='lock')lockReward();setp=null;darkT=0}
-function lockReward(){for(let i=0;i<14;i++)gems.push({x:P.x+rnd(-60,60),y:ZTOP-40+rnd(-30,30),v:2,vx:rnd(-150,150),vy:rnd(-60,160),big:1});dropPickup(W/2,ZTOP-40);P.rerolls++;banner('Gates open<small>+1 reroll.</small>','#8ff0b5');sfx.level()}
+function lockReward(){for(let i=0;i<14;i++)addGem({x:P.x+rnd(-60,60),y:ZTOP-40+rnd(-30,30),v:2,vx:rnd(-150,150),vy:rnd(-60,160),big:1});dropPickup(W/2,ZTOP-40);P.rerolls++;banner('Gates open<small>+1 reroll.</small>','#8ff0b5');sfx.level()}
 function spawnSet(k){
   k=k||wpick(setPool());
   switch(k){

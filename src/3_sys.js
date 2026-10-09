@@ -3,7 +3,9 @@
 let state='title',P=null,G=null;
 let enemies=[],projs=[],ebul=[],gems=[],pickups=[],hazards=[],zones=[],clouds=[],nades=[],timers=[],gateRows=[],decor=[],parts=[],nums=[],bolts=[],pops=[],after=[];
 let stage,stageT,score,kills,runT,combo,comboT,maxCombo,shake,flashA,flashCol,tScale,tTarget,tHold,scrollY,dir,bossE,miniE,bossWarn,miniWarn,miniDone,freezeAll,nextId,pendingLv,lvDelay,hudT,dyingT,nextDecor,nextTorch,volleyN,novaT,thunderT,wispT,stormAcc,haloT,offerList=[],relicList=[];
-const STAGE_LEN=95,MINI_AT=42,BASE_SCROLL=68,PMAX=1400;let SCROLL=BASE_SCROLL;
+const STAGE_LEN=95,MINI_AT=42,BASE_SCROLL=68;
+// Q is the effects level: 2 full, 1 lighter, 0 lightest. The frame loop lowers it when frames run slow.
+let Q=2,PMAX=900;function setQ(q){const ch=q!==Q;Q=q;PMAX=[300,600,900][q];if(ch&&typeof resize==='function'&&cv.width)resize()}let SCROLL=BASE_SCROLL;
 let diff='normal';try{const d=STORE.get('vg_diff');if(d&&DIFF[d])diff=d}catch(e){}
 let D=DIFF[diff];
 let best={};try{best=JSON.parse(STORE.get('vg2_best')||'{}')||{}}catch(e){best={}}
@@ -61,13 +63,15 @@ const hittable=e=>e.alive&&!e.phased&&!e.under&&!e.gone;
 function nearest(x,y,rad,skip,pred){let b=null,bd=rad*rad;forNear(x,y,rad,e=>{if(!hittable(e)||e===skip||e.y<-10)return;if(pred&&!pred(e))return;const d=(e.x-x)**2+(e.y-y)**2;if(d<bd){bd=d;b=e}});return b}
 
 /* ================= effects ================= */
+// With lots of gems on the floor, a new one joins a nearby gem of the same kind instead, keeping the total value.
+function addGem(g){if(gems.length>140){for(let i=gems.length-1,j=0;i>=0&&j<60;i--,j++){const o=gems[i];if(!o.pull&&!!o.coin===!!g.coin&&(o.x-g.x)**2+(o.y-g.y)**2<45*45){o.v+=g.v;if(!o.coin)o.big=o.v>1.5;return}}}gems.push(g)}
 function spark(x,y,c,n,spd=220,life=.45,size=3){for(let i=0;i<n&&parts.length<PMAX;i++){const a=rnd(0,TAU),s=rnd(.25,1)*spd;parts.push({k:0,x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:life*rnd(.6,1),m:life,s:size*rnd(.6,1.3),c})}}
 function ringFx(x,y,c,r,life=.35,w=4){if(parts.length<PMAX)parts.push({k:1,x,y,l:life,m:life,s:r,c,w})}
 function smoke(x,y,n,r=14){for(let i=0;i<n&&parts.length<PMAX;i++){const a=rnd(0,TAU),s=rnd(10,60);parts.push({k:2,x:x+rnd(-8,8),y:y+rnd(-8,8),vx:Math.cos(a)*s,vy:Math.sin(a)*s-10,l:rnd(.5,.9),m:.9,s:r*rnd(.6,1.2),c:'60,52,70'})}}
 function shards(x,y,c,n){for(let i=0;i<n&&parts.length<PMAX;i++){const a=rnd(0,TAU),s=rnd(80,260);parts.push({k:3,x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(.4,.8),m:.8,s:rnd(3,7),c,rot:rnd(0,6),vr:rnd(-12,12)})}}
-function addNum(x,y,v,crit,col){if(nums.length>(crit?90:50))return;nums.push({x:x+rnd(-8,8),y,v:typeof v==='number'?fmt(v):v,l:crit?.9:.6,m:crit?.9:.6,c:col||(crit?'#ffd166':'#fff'),s:crit?24:15})}
+function addNum(x,y,v,crit,col){if(nums.length>(crit?[24,45,70][Q]:[10,25,40][Q]))return;nums.push({x:x+rnd(-8,8),y,v:typeof v==='number'?fmt(v):v,l:crit?.9:.6,m:crit?.9:.6,c:col||(crit?'#ffd166':'#fff'),s:crit?24:15})}
 function pop(t,x,y,c,s=30,sub,subc){pops.push({t,x,y,c,s,l:1.4,m:1.4,sub,subc})}
-function boltFx(x1,y1,x2,y2,c='#c3b0ff',w=3){const pts=[[x1,y1]],n=6;for(let i=1;i<n;i++){const t=i/n;pts.push([x1+(x2-x1)*t+rnd(-12,12),y1+(y2-y1)*t+rnd(-12,12)])}pts.push([x2,y2]);bolts.push({pts,l:.18,m:.18,c,w})}
+function boltFx(x1,y1,x2,y2,c='#c3b0ff',w=3){if(bolts.length>[20,35,50][Q])return;const pts=[[x1,y1]],n=6;for(let i=1;i<n;i++){const t=i/n;pts.push([x1+(x2-x1)*t+rnd(-12,12),y1+(y2-y1)*t+rnd(-12,12)])}pts.push([x2,y2]);bolts.push({pts,l:.18,m:.18,c,w})}
 let bannerTO=0;function banner(html,col){const b=$('#banner');b.innerHTML=html;b.style.color=col||'#fff';b.classList.add('on');clearTimeout(bannerTO);bannerTO=setTimeout(()=>b.classList.remove('on'),1800)}
 let shakeOn=true,shakeCd=0,shakeT=0;try{shakeOn=STORE.get('vg_shake')!=='off'}catch(e){}
 function addShake(v){if(RM||!shakeOn||v<8||shakeCd>0)return;shake=Math.min(8,v*.45);shakeT=0;shakeCd=2}
@@ -160,7 +164,7 @@ function kill(e){
   if(e.type!=='ghost')shards(e.x,e.y,'#efe2c4',big?8:3);
   sfx.kill();
   let xp=e.d.xp*(e.champ?4:1)*(P.cu.has('greed')?1.5:1);
-  if(xp){const n=Math.min(Math.ceil(xp),14),v=xp/n;for(let i=0;i<n;i++)gems.push({x:e.x+rnd(-12,12)*(n>1),y:e.y+rnd(-12,12)*(n>1),v,vx:rnd(-80,80)*(n>1?1:.5),vy:rnd(-80,80)*(n>1?1:.5),big:v>1.5})}
+  if(xp){const n=Math.min(Math.ceil(xp),14),v=xp/n;for(let i=0;i<n;i++)addGem({x:e.x+rnd(-12,12)*(n>1),y:e.y+rnd(-12,12)*(n>1),v,vx:rnd(-80,80)*(n>1?1:.5),vy:rnd(-80,80)*(n>1?1:.5),big:v>1.5})}
   P.killN++;
   if(P.cls==='berserker'&&P.killN%5===0)heal(1,true);
   if(P.re.has('fang')&&P.killN%6===0)heal(1,true);
@@ -421,7 +425,7 @@ function updateHazards(dt){
       if(h.y>H+80)h.dead=true;break}
     case'barrel':case'pot':{h.y+=SCROLL*dt;if(h.hp<=0){h.dead=true;
         if(h.k==='barrel')explode(h.x,h.y,115,70*hs,{player:18,col:'255,120,40'});
-        else{shards(h.x,h.y,'#b86b3f',10);smoke(h.x,h.y,2,8);for(let i=0;i<ri(2,4);i++)gems.push({x:h.x,y:h.y,v:1,vx:rnd(-90,90),vy:rnd(-90,90)});if(Math.random()<.12*(P.re.has('clover')?1.5:1))dropPickup(h.x,h.y);sfx.kill()}}
+        else{shards(h.x,h.y,'#b86b3f',10);smoke(h.x,h.y,2,8);for(let i=0;i<ri(2,4);i++)addGem({x:h.x,y:h.y,v:1,vx:rnd(-90,90),vy:rnd(-90,90)});if(Math.random()<.12*(P.re.has('clover')?1.5:1))dropPickup(h.x,h.y);sfx.kill()}}
       if(h.y>H+60)h.dead=true;break}
     case'mine':{h.y+=SCROLL*dt;h.arm-=dt;
       if(h.arm<=0&&h.trig<0&&(h.x-P.x)**2+(h.y-P.y)**2<52*52){h.trig=.5;sfx.warn()}
@@ -443,7 +447,7 @@ function updateHazards(dt){
     case'boulder':{if(h.warn>0){h.warn-=dt;if(h.warn<=0)sfx.boom();break}h.y+=(SCROLL+300)*dt;h.rot+=dt*6;
       if((h.x-P.x)**2+(h.y-P.y)**2<(h.r+P.r-4)**2)damagePlayer(28);
       forNear(h.x,h.y,h.r+34,e=>{if(hittable(e)&&(e.x-h.x)**2+(e.y-h.y)**2<(h.r+e.r)**2){if(e.heavy)hurt(e,300*hs*dt,{num:false});else{hurt(e,e.max+1,{num:false});spark(e.x,e.y,e.d.col,6,260,.4,3)}}});
-      if(h.hp<=0){h.dead=true;shards(h.x,h.y,'#8d8577',24);smoke(h.x,h.y,8,16);addShake(8);sfx.boom();for(let i=0;i<6;i++)gems.push({x:h.x,y:h.y,v:2,vx:rnd(-150,150),vy:rnd(-150,150),big:1})}
+      if(h.hp<=0){h.dead=true;shards(h.x,h.y,'#8d8577',24);smoke(h.x,h.y,8,16);addShake(8);sfx.boom();for(let i=0;i<6;i++)addGem({x:h.x,y:h.y,v:2,vx:rnd(-150,150),vy:rnd(-150,150),big:1})}
       if(Math.random()<.4)smoke(h.x+rnd(-20,20),h.y-h.r,1,8);
       if(h.y>H+80)h.dead=true;break}
     case'laser':{h.y+=SCROLL*dt;h.t+=dt;const c=h.t%2.4;const ps=h.state;h.state=c<1.0?1:c<1.45?2:0;
@@ -685,4 +689,4 @@ function parry(b){buzz([12,30,12]);if(run){run.parries++;if(run.parries>=10)ach(
 
 /* ================= score & gold ================= */
 function addScore(v,part){score+=v;if(run){run.parts[part]=(run.parts[part]||0)+v}}
-function dropGold(e){let n=0;if(e.d.boss)n=70;else if(e.d.mini)n=30;else if(e.d.part)n=5;else if(e.champ)n=6;else if(e.heavy)n=3;else if(Math.random()<.08)n=1;if(!n)return;const c=Math.min(n,10),v=n/c;for(let i=0;i<c;i++)gems.push({x:e.x+rnd(-10,10),y:e.y+rnd(-10,10),v,vx:rnd(-120,120),vy:rnd(-120,120),coin:true})}
+function dropGold(e){let n=0;if(e.d.boss)n=70;else if(e.d.mini)n=30;else if(e.d.part)n=5;else if(e.champ)n=6;else if(e.heavy)n=3;else if(Math.random()<.08)n=1;if(!n)return;const c=Math.min(n,10),v=n/c;for(let i=0;i<c;i++)addGem({x:e.x+rnd(-10,10),y:e.y+rnd(-10,10),v,vx:rnd(-120,120),vy:rnd(-120,120),coin:true})}

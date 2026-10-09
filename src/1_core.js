@@ -37,7 +37,7 @@ let ZTOP=500, ZBOT=900;
 function resize(){
   const box=$('#wrap'),bw=box.clientWidth,bh=box.clientHeight;
   H=Math.round(clamp(W*bh/Math.max(1,bw),880,1170));
-  VS=Math.min(bw/W,bh/H);DPR=Math.min(2,window.devicePixelRatio||1);
+  VS=Math.min(bw/W,bh/H);DPR=Math.min(typeof Q==='number'?[1.25,1.5,2][Q]:2,window.devicePixelRatio||1);
   const st=$('#stage');st.style.width=W*VS+'px';st.style.height=H*VS+'px';st.style.setProperty('--u',VS);
   cv.width=Math.round(W*VS*DPR);cv.height=Math.round(H*VS*DPR);
   const nts=VS*DPR;if(!floorTile||Math.abs(nts-TS)>.05){TS=nts;buildTiles()}
