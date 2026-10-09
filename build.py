@@ -4,7 +4,7 @@ Usage: python build.py [output.html] [--pwa]   (default: volley-gauntlet.html)
 --pwa adds the web app manifest and service worker links for the GitHub Pages version."""
 import base64, json, os
 H = os.path.dirname(os.path.abspath(__file__))
-PARTS = ['0_shell.html','1_core.js','2_data.js','3_sys.js','3b_boss.js','3c_set.js','5_meta.js','6_music.js','4b_bossart.js','4_ui.js']
+PARTS = ['0_shell.html','1_core.js','2_data.js','3_sys.js','3b_boss.js','3c_set.js','5_meta.js','3d_evo.js','3e_summon.js','3f_ad.js','6_music.js','4b_bossart.js','4c_adart.js','4_ui.js']
 src = ''.join(open(os.path.join(H,'src',p),encoding='utf-8').read() for p in PARTS)
 def b64(p): return base64.b64encode(open(os.path.join(H,p),'rb').read()).decode()
 # No embedded fonts: Nioret World's game policy asks for system fonts.

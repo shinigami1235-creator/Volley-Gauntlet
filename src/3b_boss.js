@@ -19,10 +19,10 @@ function spawnMini(){
   $('#bossbox').hidden=false;$('#bossbox').classList.add('mini');$('#bossName').textContent=ED[k].name;$('#bossSegs').innerHTML='';sfx.boss();addShake(8);
 }
 const BOSSES=['warden','colossus','hydra','lich','carrier','slime','knight','wyrm'];
-const BHINT={warden:'Dash into pink shots to parry them.',colossus:'It has more than one fight in it.',hydra:'Watch the heads.',lich:'Frost fields slow you down.',carrier:'Watch the floor for drop pods.',slime:'It hops after you. Stay out of the puddles.',knight:'Read the blue lines before they cut.',wyrm:'It burrows. Watch the orange rings.'};
-const PHINT={warden:['The gates are down. Find the gap in the bars.','He broke loose. Keep moving.'],colossus:['Break both hands to crack the skull.','The skull comes down to bite.'],hydra:['Each head fights on its own. Kill all three.','The floor is live. Read the tiles.'],lich:['Break the three crystals to drop his shield.','The lights are out and two of them are fakes.'],carrier:['Drones and missiles incoming.','The core is open.'],slime:['It splits. Clear the little ones fast.','It jumps on you. Move when the ring shows.'],knight:['Ice pillars fall. Find the open lane.','Blades spin out of it. Keep circling.'],wyrm:['It breathes fire in a sweep.','It bursts up under you. Keep moving.']};
+const BHINT={warden:'Dash into pink shots to parry them.',colossus:'It has more than one fight in it.',hydra:'Watch the heads.',lich:'Frost fields slow you down.',carrier:'Watch the floor for drop pods.',slime:'It hops after you. Stay out of the puddles.',knight:'Read the blue lines before they cut.',wyrm:'It burrows. Watch the orange rings.',admaker:'The bigger the number, the bigger the lie. Go through the plain door.'};
+const PHINT={warden:['The gates are down. Find the gap in the bars.','He broke loose. Keep moving.'],colossus:['Break both hands to crack the skull.','The skull comes down to bite.'],hydra:['Each head fights on its own. Kill all three.','The floor is live. Read the tiles.'],lich:['Break the three crystals to drop his shield.','The lights are out and two of them are fakes.'],carrier:['Drones and missiles incoming.','The core is open.'],slime:['It splits. Clear the little ones fast.','It jumps on you. Move when the ring shows.'],knight:['Ice pillars fall. Find the open lane.','Blades spin out of it. Keep circling.'],wyrm:['It breathes fire in a sweep.','It bursts up under you. Keep moving.'],admaker:['Close the pop-ups to break his shield.','Thanks for playing! Just kidding. The doors swap now, so watch them flicker.']};
 function spawnBoss(){
-  endSet();const k=run.mode==='rush'?RUSHB[run.rushI%RUSHB.length]:(run.nextBoss&&BIOMES[BIOME].bosses.includes(run.nextBoss)?run.nextBoss:pickBoss(BIOME)),base={warden:1000,colossus:1150,hydra:1100,lich:1050,carrier:1250,slime:1050,knight:1100,wyrm:1150}[k],tier=run.mode==='rush'?Math.floor(run.rushI/RUSHB.length):run.loop;run.nextBoss=null;run.bstat={t0:runT,hits:0,parries:0};
+  endSet();const k=run.mode==='rush'?RUSHB[run.rushI%RUSHB.length]:(run.nextBoss&&BIOMES[BIOME].bosses.includes(run.nextBoss)?run.nextBoss:pickBoss(BIOME)),base={warden:1000,colossus:1150,hydra:1100,lich:1050,carrier:1250,slime:1050,knight:1100,wyrm:1150,admaker:1300}[k],tier=run.mode==='rush'?Math.floor(run.rushI/RUSHB.length):run.loop;run.nextBoss=null;run.bstat={t0:runT,hits:0,parries:0};
   const e=spawnEnemy(k,W/2,-110,{noChamp:true});e.hp=e.max=bossHp(26+3*Math.min(stage-1,4),base)*(1+tier*.5);e.mode='enter';e.bt0=runT;e.atkT=1.6;e.phase=1;e.phases=D.phases;e.inv=false;e.objInv=false;e.trans=0;e.parts=[];bossE=e;
   e.hands=[{x:W/2-150,y:230,tx:W/2-150,ty:230},{x:W/2+150,y:230,tx:W/2+150,ty:230}];
   $('#bossbox').hidden=false;$('#bossbox').classList.remove('mini');e.tw=rollTwists();e.twT={};$('#bossName').textContent=ED[k].name+(tier?' '+['II','III','IV','V','VI'][Math.min(4,tier-1)]:'')+(e.tw.length?' · '+e.tw.map(t=>TWISTS[t].n).join(', '):'');
@@ -31,7 +31,7 @@ function spawnBoss(){
 }
 function bossPhase(e){
   e.phase++;e.trans=1.5;e.inv=true;e.atkT=2;e.atkI=0;e.jump=null;e.bite=null;e.lunge=null;
-  zones=zones.filter(z=>!z.boss);ebul.length=0;walls.length=0;bossScrollStop=false;
+  zones=zones.filter(z=>!z.boss);ebul.length=0;walls.length=0;adRows=[];bossScrollStop=false;
   flashA=.6;flashCol='255,255,255';addShake(18);sfx.boss();tTarget=.3;tHold=.5;
   const K=e.phase===2?'A':'B';
   banner(`Phase ${e.phase}<small>${PHINT[e.type][K==='A'?0:1]}</small>`,'#ffd166');
@@ -41,6 +41,7 @@ function bossPhase(e){
     case'hydra':if(K==='A'){e.objInv=true;for(let i=0;i<3;i++){const p=spawnEnemy('head',e.x,e.y,{noChamp:true});p.hp=p.max=e.max*.09;p.owner=e;p.idx=i;p.atkT=1+i*.9;e.parts.push(p)}}else{e.objInv=false;e.headsGone=true;flood=true}break;
     case'lich':if(K==='A'){e.objInv=true;[[L+70,300],[W/2,390],[R-70,300]].forEach(([x,y])=>{const p=spawnEnemy('crystal',x,y,{noChamp:true});p.hp=p.max=e.max*.06;p.owner=e;p.shootT=rnd(1,3);e.parts.push(p)})}
       else{e.objInv=false;darkBoss=true;e.parts=[];for(let i=0;i<2;i++){const p=spawnEnemy('clone',e.x,e.y,{noChamp:true});p.hp=p.max=1;p.owner=e;p.shootT=rnd(1,2.5);e.parts.push(p)}}break;
+    case'admaker':if(K==='A'){e.objInv=true;[[L+95,300],[W/2,385],[R-95,300]].forEach(([x,y],i)=>{const p=spawnEnemy('adpop',x,y,{noChamp:true});p.hp=p.max=e.max*.05;p.owner=e;p.idx=i;p.hx=x;p.hy=y;p.txt=POPTXT[i];p.shootT=1.5+i*.8;e.parts.push(p)})}else{e.objInv=false;e.parts=[]}break;
   }
 }
 function partsDead(b){
@@ -57,7 +58,7 @@ function miniDown(e){
 }
 let pendingRelic=false;
 function bossDown(e){
-  bossE=null;musSting('ko');$('#bossbox').hidden=true;tTarget=.2;tHold=1.3;flashA=.8;flashCol='255,240,210';addShake(26);zones=zones.filter(z=>!z.boss);ebul.length=0;walls.length=0;
+  bossE=null;musSting('ko');$('#bossbox').hidden=true;tTarget=.2;tHold=1.3;flashA=.8;flashCol='255,240,210';addShake(26);zones=zones.filter(z=>!z.boss);ebul.length=0;walls.length=0;adRows=[];
   darkBoss=false;flood=false;bossScrollStop=false;for(const p of e.parts||[])if(p.alive){p.alive=false;spark(p.x,p.y,p.d.col,12,260,.5,3)}
   for(let i=0;i<6;i++)later(i*.11,()=>explode(e.x+rnd(-50,50),e.y+rnd(-40,40),90,1e9,{col:'255,90,60',quiet:true}));
   for(let i=0;i<40;i++)addGem({x:e.x+rnd(-40,40),y:e.y+rnd(-40,40),v:3,vx:rnd(-260,260),vy:rnd(-200,260),big:1});
@@ -79,7 +80,7 @@ function updateBoss(e,dt,frozen){
   const K=e.phase===1?1:e.phase===2?'A':'B',cd=1.4*D.bcd;
   const Z=o=>zone(Object.assign({boss:true},o));
   if(e.tw&&e.tw.length){twistTick(e,dt);if(e.tw.includes('enraged'))dt*=1.25}
-  switch(e.type){case'slime':slimeAI(e,dt,K,cd,Z);break;case'knight':knightAI(e,dt,K,cd,Z);break;case'wyrm':wyrmAI(e,dt,K,cd,Z);break;case'warden':wardenAI(e,dt,K,cd,Z);break;case'colossus':colossusAI(e,dt,K,cd,Z);break;case'hydra':hydraAI(e,dt,K,cd,Z);break;case'lich':lichAI(e,dt,K,cd,Z);break;case'carrier':carrierAI(e,dt,K,cd,Z);break}
+  switch(e.type){case'slime':slimeAI(e,dt,K,cd,Z);break;case'knight':knightAI(e,dt,K,cd,Z);break;case'wyrm':wyrmAI(e,dt,K,cd,Z);break;case'warden':wardenAI(e,dt,K,cd,Z);break;case'colossus':colossusAI(e,dt,K,cd,Z);break;case'hydra':hydraAI(e,dt,K,cd,Z);break;case'lich':lichAI(e,dt,K,cd,Z);break;case'carrier':carrierAI(e,dt,K,cd,Z);break;case'admaker':adMakerAI(e,dt,K,cd,Z);break}
 }
 function doJump(e,dt){const j=e.jump;j.t+=dt;const p=clamp(j.t/j.T,0,1);e.x=j.sx+(j.tx-j.sx)*p;e.y=j.sy+(j.ty-j.sy)*p;if(p>=1){e.jump=null;if(j.land)j.land()}}
 function wardenAI(e,dt,K,cd,Z){
@@ -191,6 +192,7 @@ function updatePart(e,dt,frozen){
     else if(e.idx===1){const dirn=pick([-1,1]),a0=Math.PI/2+.8*dirn,a1=Math.PI/2-.8*dirn,len=560;zone({k:'l',x1:e.x,y1:e.y,x2:e.x,y2:e.y,w:30,warn:.8,dur:1.2,dmg:16,cont:true,col:'255,140,50',beam:true,flame:true,boss:true,follow:z=>{const p=clamp((z.t-z.warn)/z.dur,0,1),an=a0+(a1-a0)*p;z.x1=e.x;z.y1=e.y+10;z.x2=z.x1+Math.cos(an)*len;z.y2=z.y1+Math.sin(an)*len}});e.atkT+=1}
     else{for(let i=0;i<7;i++)later(i*.15,()=>{if(e.alive)ebul.push({x:e.x,y:e.y+14,vx:0,vy:200,r:8,dmg:14,wave:true,x0:e.x,wt:i*.4,amp:44,pink:i%3===1})})}
     return}
+  if(e.type==='adpop'){adPopAI(e,dt,frozen);return}
   if(e.type==='crystal'){if(frozen)return;e.shootT-=dt;if(e.shootT<=0){e.shootT=3*D.bcd;ring(e.x,e.y,6,140,rnd(0,TAU),12,{pinkEvery:6})}return}
   if(e.type==='clone'){if(frozen||e.gone)return;e.shootT-=dt;if(e.shootT<=0){e.shootT=2.8*D.bcd;ring(e.x,e.y,8,130,rnd(0,TAU),12,{pinkEvery:4})}return}
 }

@@ -10,14 +10,14 @@ const BIOMES={
 const BIOME_ORDER=['dungeon','frozen','forge','ruins','sky'];
 const RUSHB=['warden','colossus','hydra','lich','carrier','slime','knight','wyrm'];
 let BIOME='dungeon';
-const bossBiome=b=>BIOME_ORDER.find(k=>BIOMES[k].bosses.includes(b))||'dungeon';
+const bossBiome=b=>Object.keys(BIOMES).find(k=>BIOMES[k].bosses.includes(b))||'dungeon';
 function pickBoss(b){const l=BIOMES[b].bosses,r=run&&run.daily?rngOf(+run.daily.key.replace(/-/g,'')+b.length*7+stage):Math.random;return l[Math.floor(r()*l.length)]}
 function setBiome(k){BIOME=k;TORCH=null;buildTiles()}
 
 /* ================= save ================= */
 const SAVE_KEY='vg_save3';
 let S=null;
-function defSave(){return{v:1,embers:0,forge:{},unl:{},ach:{},mastery:{},skin:{},weapon:{},codex:{en:{},boss:{},relic:{},fuse:{},curse:{}},grades:{},stats:{runs:0,bossKills:0,bossBy:{},best:{}},daily:{},own:{},sel:{mode:'gauntlet',cls:'ranger'}}}
+function defSave(){return{v:1,embers:0,forge:{},unl:{},ach:{},mastery:{},skin:{},weapon:{},codex:{en:{},boss:{},relic:{},fuse:{},curse:{},evo:{}},grades:{},stats:{runs:0,bossKills:0,bossBy:{},best:{}},daily:{},own:{},sel:{mode:'gauntlet',cls:'ranger'}}}
 function mergeSave(o){
   if(!o||typeof o!=='object'||o.v!==1)return false;const d=defSave();
   for(const k in d){if(o[k]===undefined)continue;if(d[k]&&typeof d[k]==='object'&&!Array.isArray(d[k]))d[k]=Object.assign(d[k],o[k]);else d[k]=o[k]}
@@ -25,13 +25,13 @@ function mergeSave(o){
 }
 function loadSave(){S=defSave();try{const t=STORE.get(SAVE_KEY);if(t)mergeSave(JSON.parse(t))}catch(e){}
   try{const ob=JSON.parse(STORE.get('vg2_best')||'{}');for(const k in ob)S.stats.best[k]=Math.max(S.stats.best[k]||0,ob[k]||0)}catch(e){}
-  best=S.stats.best}
+  best=S.stats.best;if(S.ach.admaker&&!RUSHB.includes('admaker'))RUSHB.push('admaker')}
 function saveGame(){try{STORE.set(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 function saveCode(){return'VG3.'+btoa(unescape(encodeURIComponent(JSON.stringify(S))))}
 function loadCode(t){try{t=t.trim();if(!t.startsWith('VG3.'))return false;const o=JSON.parse(decodeURIComponent(escape(atob(t.slice(4)))));if(!mergeSave(o))return false;best=S.stats.best;saveGame();return true}catch(e){return false}}
 
 /* ================= unlocks & achievements ================= */
-const LOCKED={relic:['phoenix','hourglass','crown','thorn','mark','charm','purse','ring'],skill:['thunder','wisp'],curse:['blood','hunted'],mode:['endless','rush'],skin:['gold'],weapon:['ranger','mage','gunner','berserker'].flatMap(c=>[1,2,3].map(i=>c+':'+i))};
+const LOCKED={relic:['phoenix','hourglass','crown','thorn','mark','charm','purse','ring'],skill:['thunder','wisp'],curse:['blood','hunted'],mode:['endless','rush'],skin:['gold'],weapon:['ranger','mage','gunner','berserker','summoner'].flatMap(c=>[1,2,3].map(i=>c+':'+i))};
 function unlocked(type,k){return!(LOCKED[type]||[]).includes(k)||!!S.unl[type+':'+k]}
 const ACH={
   warden:{n:'Jailbreak',d:'Beat the Warden.',un:'relic:thorn'},
@@ -50,11 +50,13 @@ const ACH={
   shrine:{n:'Pilgrim',d:'Finish a shrine.',un:'relic:ring'},
   hardboss:{n:'Hardened',d:'Beat a boss on Hard or Nightmare.',un:'skin:gold'},
   nightmare:{n:'Nightmare walker',d:'Beat a boss on Nightmare.',un:''},
-  all4:{n:'Jack of all trades',d:'Beat a boss with every hero.',un:''},
+  all4:{n:'Jack of all trades',d:'Beat a boss with the Ranger, Mage, Gunner and Berserker.',un:''},
   win:{n:'Gauntlet runner',d:'Finish a Gauntlet run.',un:''},
   slime:{n:'Dethroned',d:'Beat the Slime King.',un:''},
   knight:{n:'Unhorsed',d:'Beat the Frost Knight.',un:''},
   wyrm:{n:'Dug out',d:'Beat the Magma Wyrm.',un:''},
+  evolve:{n:'Evolved',d:'Evolve a weapon.',un:''},
+  admaker:{n:'Skip ad',d:'Beat the Ad Maker, the secret boss after a Nightmare Gauntlet run.',un:''},
   wranger1:{n:'Bolt action',d:'Beat a boss with the Ranger.',un:'weapon:ranger:1'},
   wmage1:{n:'Static',d:'Beat a boss with the Mage.',un:'weapon:mage:1'},
   wgunner1:{n:'Scattershot',d:'Beat a boss with the Gunner.',un:'weapon:gunner:1'},
@@ -67,6 +69,9 @@ const ACH={
   wmage3:{n:'Mage champion',d:'Finish a Gauntlet run with the Mage on Normal or harder.',un:'weapon:mage:3'},
   wgunner3:{n:'Gunner champion',d:'Finish a Gauntlet run with the Gunner on Normal or harder.',un:'weapon:gunner:3'},
   wberserker3:{n:'Berserker champion',d:'Finish a Gauntlet run with the Berserker on Normal or harder.',un:'weapon:berserker:3'},
+  wsummoner1:{n:'Raise the dead',d:'Beat a boss with the Summoner.',un:'weapon:summoner:1'},
+  wsummoner2:{n:'Feast day',d:'Sacrifice 40 minions in one run with the Summoner.',un:'weapon:summoner:2'},
+  wsummoner3:{n:'Summoner champion',d:'Finish a Gauntlet run with the Summoner on Normal or harder.',un:'weapon:summoner:3'},
 };
 function unlockName(u){if(!u)return'';const i0=u.indexOf(':'),t=u.slice(0,i0),k=u.slice(i0+1);return t==='relic'?RE[k].n+' relic':t==='skill'?SK[k].n+' skill':t==='curse'?CU[k].n+' curse':t==='mode'?MODES[k].n+' mode':t==='skin'?'Gold skin for every hero':t==='weapon'?(()=>{const[c,i]=k.split(':');return WEAPS[c][+i].wn+' for the '+CLASSES[c].n})():''}
 function ach(k){if(!S||S.ach[k])return;S.ach[k]=1;const A=ACH[k];if(A.un)S.unl[A.un]=1;if(run)run.newAch.push(k);saveGame();toast(`${A.n}<small>${A.d}${A.un?' Unlocked: '+unlockName(A.un)+'.':''}</small>`);sfx.level()}
@@ -113,20 +118,27 @@ const WEAPS={
     {wn:'Spears',id:'spears',w:'spear',iv:.66,dmg:15,cap:5,pw:['spear','spears'],wd:'Thrown spears that pierce four enemies.'},
     {wn:'Chakram',id:'chakram',w:'disc',iv:.6,dmg:11,cap:5,pw:['chakram','chakrams'],wd:'Spinning blades that bounce between four enemies.'},
     {wn:'Warhammer',id:'hammer',w:'slam',iv:.7,dmg:32,cap:4,pw:['quake','quakes'],wd:'Slams the ground in front of you and knocks enemies back. Short range, huge hits.'}],
+  summoner:[{wn:'Bone staff',id:'bone',pw:['skeleton','skeletons']},
+    {wn:'Wolf totem',id:'wolf',w:'wolf',iv:1.1,dmg:12,cap:5,pw:['wolf','wolves'],wd:'Calls wolves that run down enemies and lunge at them. Up to 5 at once, gone after 14 seconds.'},
+    {wn:'Golem heart',id:'golem',w:'golem',iv:1.6,dmg:18,cap:9,pw:['core','cores'],wd:'Builds stone golems that slam everything near them and block shots that hit them. One golem, plus one more for every 4 cores.'},
+    {wn:'Spirit lantern',id:'lantern',w:'lantern',iv:.8,dmg:7,cap:8,pw:['spirit','spirits'],wd:'Spirits circle you and each one fires a homing bolt. Up to 8 spirits.'}],
 };
+function classOk(c){return c!=='summoner'||!!(S&&(S.ach.all4||S.unl['class:summoner']))}
 function weapOk(c,i){return i===0||unlocked('weapon',c+':'+i)}
 function weapOf(c){const i=S&&S.weapon?(+S.weapon[c]||0):0;return WEAPS[c][i]&&weapOk(c,i)?i:0}
 function weapHint(c,i){const k=Object.keys(ACH).find(a=>ACH[a].un==='weapon:'+c+':'+i);return k?ACH[k].d:''}
 const WENH={bow:{n:'Volley',d:'Fire 1 more arrow per level, past the arrow cap.'},crossbow:{n:'Blasting bolts',d:'Bolts explode where they hit. Each level makes the blast bigger and stronger.'},seeker:{n:'Finisher',d:'+30% damage per level to enemies under half HP.'},sky:{n:'Starfall',d:'1 more arrow falls per level.'},
   orb:{n:'Big bang',d:'Orb blasts are 30% wider and 20% stronger per level.'},storm:{n:'Overcharge',d:'+2 arcs per level, and arcs hit 10% harder.'},frost:{n:'Deep freeze',d:'+10% freeze chance per level. Frozen enemies take 25% more damage per level.'},meteor:{n:'Firestorm',d:'Blasts get wider and burn 2 seconds longer per level.'},
   rifle:{n:'Hollow points',d:'Bullets pierce 1 more enemy per level.'},shotgun:{n:'Buckshot',d:'+3 pellets per level.'},minigun:{n:'Spin up',d:'Fire 12% faster per level.'},rocket:{n:'Cluster rockets',d:'Rockets burst into smaller blasts. Each level makes the blast bigger.'},
-  axes:{n:'Whirling axes',d:'Axes hit 2 more enemies per level.'},spears:{n:'Impale',d:'Spears pierce 2 more enemies per level.'},chakram:{n:'Razor rim',d:'Chakrams bounce 2 more times per level.'},hammer:{n:'Aftershock',d:'Each slam sends a second quake. Each level makes it hit harder.'}};
-const BASEWN={ranger:'Bow',mage:'Orb staff',gunner:'Rifle',berserker:'Axes'};
+  axes:{n:'Whirling axes',d:'Axes hit 2 more enemies per level.'},spears:{n:'Impale',d:'Spears pierce 2 more enemies per level.'},chakram:{n:'Razor rim',d:'Chakrams bounce 2 more times per level.'},hammer:{n:'Aftershock',d:'Each slam sends a second quake. Each level makes it hit harder.'},
+  bone:{n:'Grave call',d:'Minions hit 20% harder per level.'},wolf:{n:'Alpha',d:'Minions hit 20% harder per level.'},golem:{n:'Bedrock',d:'Minions hit 20% harder per level.'},lantern:{n:'Bright flame',d:'Minions hit 20% harder per level.'}};
+const BASEWN={ranger:'Bow',mage:'Orb staff',gunner:'Rifle',berserker:'Axes',summoner:'Bone staff'};
 const SKINS={
   ranger:[null,{col:'#3a7d2c',hi:'#8fe06b',dk:'#1a3d12'},{col:'#2c4a8a',hi:'#7fa8ff',dk:'#121f40'}],
   mage:[null,{col:'#b0304f',hi:'#ff8aa5',dk:'#4a0f1e'},{col:'#1f7a8a',hi:'#7fe7ff',dk:'#0b3540'}],
   gunner:[null,{col:'#4a5a6e',hi:'#9fb4d8',dk:'#1c2430'},{col:'#8a2c7d',hi:'#ff8ae6',dk:'#3a0f34'}],
   berserker:[null,{col:'#2c6b4a',hi:'#7fe0a8',dk:'#0f2e1f'},{col:'#3a3a46',hi:'#8b90a0',dk:'#15151c'}],
+  summoner:[null,{col:'#5a2a6a',hi:'#d68aff',dk:'#22102a'},{col:'#6a5a2a',hi:'#ffe08a',dk:'#2a220c'}],
 };
 const GOLDSKIN={col:'#c9a227',hi:'#ffe58a',dk:'#6b5210'};
 const BUYSKINS=[
@@ -166,7 +178,7 @@ function applyMeta(){
   if(fr('heirloom')&&fs>0)pendingRelic=true;
 }
 function giveRelic(){const pool=Object.keys(RE).filter(k=>!P.re.has(k)&&unlocked('relic',k));if(!pool.length)return'You find nothing new.';const k=pick(pool);P.re.add(k);S.codex.relic[k]=1;if(k==='clover')P.rerolls+=3;recalc();return`You get ${RE[k].n}. ${RE[k].d}`}
-function clearField(){enemies=[];projs=[];ebul=[];gems=gems.filter(g=>g.coin);pickups=[];hazards=[];zones=[];clouds=[];nades=[];gateRows=[];walls=[];setp=null;squeeze=0;darkT=0;darkBoss=false;flood=false;bossScrollStop=false;freezeAll=0}
+function clearField(){adRows=[];enemies=[];projs=[];ebul=[];gems=gems.filter(g=>g.coin);pickups=[];hazards=[];zones=[];clouds=[];nades=[];gateRows=[];walls=[];setp=null;squeeze=0;darkT=0;darkBoss=false;flood=false;bossScrollStop=false;freezeAll=0}
 function beginStage(){
   clearField();for(const g of gems){g.pull=true}hideOv();state='play';$('#hud').hidden=false;
   stageT=0;bossWarn=false;miniWarn=false;miniDone=false;dir.next=.6;dir.seq=['crowd','gate','scatter','set','gate'];dir.trick=.8;
@@ -175,10 +187,12 @@ function beginStage(){
 }
 function afterBoss(e){
   const bs=run.bstat;if(bs){const g=gradeOf(bs);run.grades.push(g);const bk=e.type+'_'+diff;if(!S.grades[bk]||GR.indexOf(g)<GR.indexOf(S.grades[bk]))S.grades[bk]=g;S.codex.boss[e.type]=S.codex.boss[e.type]&&GR.indexOf(S.codex.boss[e.type])<GR.indexOf(g)?S.codex.boss[e.type]:g;run.gradeB+={S:20,A:12,B:6,C:2,D:0}[g];if(g==='S')ach('sgrade');run.lastGrade=g}
-  run.bosses++;S.stats.bossKills++;S.stats.bossBy[P.cls]=1;ach(e.type);if(run.mode!=='daily')ach('w'+P.cls+'1');if(e.tw&&e.tw.length)run.twists=(run.twists||0)+e.tw.length;if(S.stats.bossKills>=3)ach('bosses3');if(diff==='nightmare')ach('nightmare');if(diff==='hard'||diff==='nightmare')ach('hardboss');if(Object.keys(CLASSES).every(c=>S.stats.bossBy[c]))ach('all4');if(stage>=3)ach('stage3');saveGame();
+  if(e.type==='admaker'){if(!S.ach.admaker){S.embers+=300;run.adBonus=300}if(!RUSHB.includes('admaker'))RUSHB.push('admaker')}
+  run.bosses++;S.stats.bossKills++;S.stats.bossBy[P.cls]=1;ach(e.type);if(run.mode!=='daily')ach('w'+P.cls+'1');if(e.tw&&e.tw.length)run.twists=(run.twists||0)+e.tw.length;if(S.stats.bossKills>=3)ach('bosses3');if(diff==='nightmare')ach('nightmare');if(diff==='hard'||diff==='nightmare')ach('hardboss');if(['ranger','mage','gunner','berserker'].every(c=>S.stats.bossBy[c]))ach('all4');if(stage>=3)ach('stage3');saveGame();
   if(run.mode==='rush'){run.rushI++;pendingLv+=2;heal(P.maxHp*.5);const nb=RUSHB[run.rushI%RUSHB.length];later(2.4,()=>{setBiome(bossBiome(nb));clearField();stageT=STAGE_LEN;bossWarn=false;miniDone=true;banner(`${ED[nb].name}<small>Boss ${run.rushI+1}.</small>`,'#ff6b85')});return}
   if(run.mode==='endless'){const i=(BIOME_ORDER.indexOf(BIOME)+1)%5;if(i===0)run.loop++;later(1.8,()=>{setBiome(BIOME_ORDER[i]);if(stage%2===1)openShop(beginStage);else beginStage()});return}
   if(run.elite){pendingRelic=true;run.elite=false}
+  if(run.mode==='gauntlet'&&diff==='nightmare'&&stage===6&&BIOME!=='ad'&&!run.won){later(1.8,openAdBreak);return}
   if(stage>5&&!run.won){later(1.8,openWin);return}
   later(1.8,openMap);
 }
@@ -211,7 +225,7 @@ function showForge(tab){state='forge';if(tab)forgeTab=tab;forgeMigrate();if(!S.o
     h+=`<div class="flist">`;for(const k in FORGE){const F=FORGE[k],r=fr(k),mx=r>=F.max,c=mx?0:forgeCost(k);h+=`<div class="frow"><canvas data-ic="${k}" width="80" height="80"></canvas><div><b>${F.n}</b> <span class="lv">${r}/${F.max}</span><p>${F.d}</p></div><button class="btn sm" data-k="${k}" ${mx||S.embers<c?'disabled':''}>${mx?'Maxed':'Buy '+c}</button></div>`}h+='</div>';
     if(S.forgeSpent>0)h+=`<div class="row"><button class="btn sm alt" id="fRefund">${refundArm?'Click again to refund '+S.forgeSpent+' Embers':'Refund all ('+S.forgeSpent+')'}</button></div>`}
   else{sub+=' Skins you buy work on that hero in every mode except Daily.';
-    h+=`<div class="ctabs four">`+Object.keys(CLASSES).map(c=>`<button class="dbtn" data-c="${c}" aria-pressed="${c===wardCls}">${CLASSES[c].n}</button>`).join('')+`</div><div class="flist">`;
+    h+=`<div class="ctabs five">`+Object.keys(CLASSES).map(c=>`<button class="dbtn" data-c="${c}" aria-pressed="${c===wardCls}">${CLASSES[c].n}</button>`).join('')+`</div><div class="flist">`;
     BUYSKINS.forEach((b,j)=>{const own=!!S.own[wardCls+':'+b.id],on=(S.skin[wardCls]||0)===j+4;h+=`<div class="frow"><canvas data-sk="${j}" width="80" height="80"></canvas><div><b>${b.n}</b><p>${own?(on?'Equipped.':'Owned.'):b.c+' Embers.'}</p></div><button class="btn sm" data-k="${b.id}" ${!own&&S.embers<b.c||on?'disabled':''}>${own?(on?'Equipped':'Equip'):'Buy '+b.c}</button></div>`});h+='</div>'}
   ovX('Forge',sub,h,[{l:'Back',alt:true,f:()=>{refundArm=false;toMenu()}}],true);
   for(const cv of document.querySelectorAll('#xB canvas[data-ic]')){const g=cv.getContext('2d');g.translate(40,40);drawIcon(g,FORGE[cv.dataset.ic].icon,28)}
@@ -224,16 +238,17 @@ function showForge(tab){state='forge';if(tab)forgeTab=tab;forgeMigrate();if(!S.o
   else bindX('.flist button[data-k]',id=>{const j=BUYSKINS.findIndex(b=>b.id===id),b=BUYSKINS[j],key=wardCls+':'+id;if(!S.own[key]){if(S.embers<b.c)return;S.embers-=b.c;S.own[key]=1;sfx.pick()}S.skin[wardCls]=j+4;saveGame();showForge()});
 }
 /* ---------- codex screen ---------- */
-const EDESC={grunt:'Walks at you in crowds.',runner:'Fast and fragile.',brute:'Slow, heavy and hard to kill.',shield:'Blocks shots from the front with its shield.',splitter:'Splits into three when it dies.',mini:'Comes out of a splitter.',bomber:'Explodes when it dies or touches you.',shooter:'Stops and fires at you.',ghost:'Fades out, and shots pass through it while it does.',bat:'Hovers at the wall, then dives at where you stand.',charger:'Aims a red line at you, then runs along it.',mole:'Tunnels to you and bursts out of the floor.',stalker:'Comes up from behind you.',drone:'Flies across in a line and shoots down.',ogre:'Mini-boss. Charges, slams shockwaves and throws rocks.',witch:'Mini-boss. Teleports, curses the floor and summons ghosts.',golem:'Mini-boss. Armored until its core opens after a laser attack.',warden:'Dungeon boss. Locks the gates, then breaks loose and leaps at you.',colossus:'Forge boss. Its hands slam and sweep, then the skull bites.',hydra:'Ruins boss. Three heads, then a flooded floor that lights up.',lich:'Frozen Caves boss. Crystals shield him, then the lights go out.',carrier:'Sky boss. Turrets, pods, drones and a rotating laser.',slime:'Hops after you, splits into little slimes and leaves slowing puddles. In the last phase it lands on you.',knight:'Cuts blue lines across the floor, drops ice pillars and charges. In the last phase it spins out blades.',wyrm:'Burrows and pops up somewhere else, breathes fire in a sweep and bursts up under you in the last phase.'};
+const EDESC={grunt:'Walks at you in crowds.',runner:'Fast and fragile.',brute:'Slow, heavy and hard to kill.',shield:'Blocks shots from the front with its shield.',splitter:'Splits into three when it dies.',mini:'Comes out of a splitter.',bomber:'Explodes when it dies or touches you.',shooter:'Stops and fires at you.',ghost:'Fades out, and shots pass through it while it does.',bat:'Hovers at the wall, then dives at where you stand.',charger:'Aims a red line at you, then runs along it.',mole:'Tunnels to you and bursts out of the floor.',stalker:'Comes up from behind you.',drone:'Flies across in a line and shoots down.',ogre:'Mini-boss. Charges, slams shockwaves and throws rocks.',witch:'Mini-boss. Teleports, curses the floor and summons ghosts.',golem:'Mini-boss. Armored until its core opens after a laser attack.',warden:'Dungeon boss. Locks the gates, then breaks loose and leaps at you.',colossus:'Forge boss. Its hands slam and sweep, then the skull bites.',hydra:'Ruins boss. Three heads, then a flooded floor that lights up.',lich:'Frozen Caves boss. Crystals shield him, then the lights go out.',carrier:'Sky boss. Turrets, pods, drones and a rotating laser.',slime:'Hops after you, splits into little slimes and leaves slowing puddles. In the last phase it lands on you.',knight:'Cuts blue lines across the floor, drops ice pillars and charges. In the last phase it spins out blades.',wyrm:'Burrows and pops up somewhere else, breathes fire in a sweep and bursts up under you in the last phase.',admaker:'Secret boss after a Nightmare Gauntlet run. Rigged doors, Play Now buttons that burst, pop-ups that shield him, and doors that swap in the last phase.'};
 let codexTab='en';
 function showCodex(tab){state='codex';codexTab=tab||codexTab;
-  const tabs=[['en','Enemies'],['boss','Bosses'],['relic','Relics'],['fuse','Fusions'],['curse','Curses'],['ach','Feats']];
+  const tabs=[['en','Enemies'],['boss','Bosses'],['relic','Relics'],['fuse','Fusions'],['evo','Evolutions'],['curse','Curses'],['ach','Feats']];
   let h='<div class="ctabs">'+tabs.map(([k,n])=>`<button class="dbtn" data-k="${k}" aria-pressed="${k===codexTab}">${n}</button>`).join('')+'</div><div class="cgrid">';
   let found=0,total=0;const tile=(ic,kind,name,desc,known)=>{total++;if(known)found++;return`<div class="ctile${known?'':' unk'}"><canvas data-${kind}="${ic}" width="88" height="88"></canvas><div><b>${known?name:'???'}</b><p>${desc}</p></div></div>`};
   if(codexTab==='en'){for(const k of['grunt','runner','brute','shield','splitter','mini','bomber','shooter','ghost','bat','charger','mole','stalker','drone','ogre','witch','golem']){const n=S.codex.en[k]||0;h+=tile(k,'en',ED[k].name||k[0].toUpperCase()+k.slice(1),n?`${EDESC[k]} Killed: ${n}.`:'Kill one to learn about it.',n>0)}}
-  if(codexTab==='boss'){for(const k of RUSHB){const g=S.codex.boss[k];const per=Object.keys(DIFF).map(d=>S.grades[k+'_'+d]?DIFF[d].n+' '+S.grades[k+'_'+d]:'').filter(Boolean).join(', ');h+=tile(k,'en',ED[k].name,g?`${EDESC[k]} Best grades: ${per}.`:'Beat it to learn about it.',!!g)}}
+  if(codexTab==='boss'){for(const k of[...RUSHB.filter(b=>b!=='admaker'),'admaker']){const g=S.codex.boss[k];const per=Object.keys(DIFF).map(d=>S.grades[k+'_'+d]?DIFF[d].n+' '+S.grades[k+'_'+d]:'').filter(Boolean).join(', ');h+=tile(k,'en',ED[k].name,g?`${EDESC[k]} Best grades: ${per}.`:'Beat it to learn about it.',!!g)}}
   if(codexTab==='relic'){for(const k in RE){const u=unlocked('relic',k),kn=!!S.codex.relic[k];h+=tile(k,'ic',RE[k].n,kn?RE[k].d:u?'Not found yet.':'Locked. '+lockHint('relic:'+k),kn)}}
   if(codexTab==='fuse'){for(const k in FU){const F=FU[k],kn=!!S.codex.fuse[k];h+=tile(k,'ic',F.n,kn?`${SK[F.a].n} + ${SK[F.b].n}. ${F.d}`:'Fuse two skills to find it.',kn)}}
+  if(codexTab==='evo'){for(const k in EVO){const E=EVO[k],wb=weapById(k),kn=!!(S.codex.evo||{})[k];const wn=wb?wb.w.wn:k,cn=wb?CLASSES[wb.c].n:'';h+=tile('wenh','ic',E.n,kn?`${cn} ${wn} + ${RE[E.re].n}. ${E.d}`:`Max the weapon upgrade on the ${cn} ${wn} and hold the right relic.`,kn)}}
   if(codexTab==='curse'){for(const k in CU){const c=CU[k],u=unlocked('curse',k),kn=!!S.codex.curse[k];h+=tile(k,'ic',c.n,kn?`${c.up}. ${c.dn}.`:u?'Not taken yet.':'Locked. '+lockHint('curse:'+k),kn)}}
   if(codexTab==='ach'){for(const k in ACH){const A=ACH[k],kn=!!S.ach[k];h+=tile(kn?'crit':'glass','ic',A.n,A.d+(A.un?' Unlocks '+unlockName(A.un)+'.':''),kn).replace('???',A.n)}}
   h+='</div>';
@@ -305,9 +320,11 @@ function openEvent(next){
 }
 /* ---------- victory ---------- */
 function openWin(){musSting('win');
-  if(state!=='play')return;clearField();state='win';run.won=true;ach('win');if(diff!=='story'&&run.mode!=='daily')ach('w'+P.cls+'3');const r=endRun();emitRun('run-complete','won');
+  if(state!=='play')return;clearField();state='win';run.won=true;ach('win');if(diff!=='story'&&run.mode!=='daily')ach('w'+P.cls+'3');
+  const adEnd=BIOME==='ad';
+  const r=endRun();emitRun('run-complete','won');
   const m=Math.floor(runT/60),s=Math.floor(runT%60);
-  ovX('Run complete',`You beat all five bosses on ${D.n}.`,`<dl class="kv"><dt>Score</dt><dd class="hi">${fmt(score)}</dd><dt>Grades</dt><dd>${run.grades.join(' ')}</dd><dt>Embers</dt><dd>+${r.e}</dd><dt>Time</dt><dd>${m}:${String(s).padStart(2,'0')}</dd></dl>`,[{l:'Keep going',f:()=>{run.mode='endless';const i=(BIOME_ORDER.indexOf(BIOME)+1)%5;run.loop++;setBiome(BIOME_ORDER[i]);beginStage()}},{l:'Main menu',alt:true,f:toMenu}]);
+  ovX(adEnd?'The ads are off':'Run complete',adEnd?`You beat the Ad Maker on ${D.n}. No more fake gates and no more fake offers. It's just the game now.${run.adBonus?' +300 Embers for finding him.':''}`:`You beat all five bosses on ${D.n}.`,`<dl class="kv"><dt>Score</dt><dd class="hi">${fmt(score)}</dd><dt>Grades</dt><dd>${run.grades.join(' ')}</dd><dt>Embers</dt><dd>+${r.e}</dd><dt>Time</dt><dd>${m}:${String(s).padStart(2,'0')}</dd></dl>`,[{l:'Keep going',f:()=>{run.mode='endless';const i=(BIOME_ORDER.indexOf(BIOME)+1)%5;run.loop++;setBiome(BIOME_ORDER[i]);beginStage()}},{l:'Main menu',alt:true,f:toMenu}]);
 }
 
 /* ================= gamepad ================= */

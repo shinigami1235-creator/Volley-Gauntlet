@@ -16,7 +16,7 @@ function render(){
   drawDecor();
   if(['title','class','forge','codex','save'].includes(state)){drawTorchLight();ctx.restore();drawVignette();return}
   if(flood)drawFlood();
-  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawPickups();drawEnemies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();drawWind();
+  drawSetUnder();drawHazardsFloor();drawClouds();drawZonesFloor();drawGates();drawGems();drawHazardsTop();drawWalls();drawAdRows();drawPickups();drawEnemies();drawAllies();drawAfter();drawPlayer();drawProjs();drawBullets();drawNades();drawZonesTop();drawParts();drawBolts();drawNums();drawTorchLight();drawSqueeze();drawSetOver();drawWind();drawPopups();
   const dk=darkBoss?1:darkT>0?Math.min(1,darkT,(14-darkT)*2):0;if(dk>0){drawDark(dk);drawZonesFloor();drawZonesTop();drawBullets()}
   ctx.restore();
   drawVignette();
@@ -169,7 +169,7 @@ function drawPickups(){for(const p of pickups){if(p.t>7&&Math.floor(p.t*8)%2)con
 /* enemies */
 const FEET={grunt:1,runner:1,brute:1,shield:1,bomber:1,charger:1};
 function drawEnemies(){
-  for(const e of enemies){if(!e.alive)continue;
+  for(const e of enemies){if(!e.alive||e.d.popup)continue;
     if(e.tw&&e.tw.length&&!e.gone){ctx.save();ctx.strokeStyle='rgba(255,70,70,.6)';ctx.lineWidth=3;ctx.setLineDash([12,9]);ctx.lineDashOffset=-runT*40;ctx.beginPath();ctx.arc(e.x,e.y,e.r+16,0,TAU);ctx.stroke();ctx.restore()}
     if(e.type==='carrier'){drawCarrier(e);continue}
     if(e.under){ctx.fillStyle='#4a3322';ctx.beginPath();ctx.ellipse(e.x,e.y+4,18,9,0,0,TAU);ctx.fill();ctx.fillStyle='#6b4a30';for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(e.x+Math.cos(i*1.3+e.t*6)*12,e.y+2+Math.sin(i*1.7)*4,3,0,TAU);ctx.fill()}continue}
@@ -279,6 +279,7 @@ function drawProjs(){
   ctx.restore();
 }
 function drawBullets(){ctx.save();for(const b of ebul){
+  if(b.adbtn){drawAdButton(b);continue}
   if(b.skull){ctx.globalCompositeOperation='lighter';const r2=b.r*2.4;ctx.drawImage(glow('#ff6b3d',.5),b.x-r2,b.y-r2,r2*2,r2*2);ctx.globalCompositeOperation='source-over';ctx.save();ctx.translate(b.x,b.y);skull(ctx,b.r,b.pink?'#ff9be6':'#e8e0cc');ctx.fillStyle='#ff3b4f';ctx.beginPath();ctx.arc(-b.r*.27,-b.r*.1,b.r*.1,0,TAU);ctx.arc(b.r*.27,-b.r*.1,b.r*.1,0,TAU);ctx.fill();ctx.restore();continue}
   if(b.bone){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(runT*8+b.x);if(b.pink){ctx.globalCompositeOperation='lighter';ctx.drawImage(glow('#ff6bd6',.6),-22,-22,44,44);ctx.globalCompositeOperation='source-over'}ctx.fillStyle=b.pink?'#ff9be6':'#efe6d2';ctx.strokeStyle='#6b6250';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(-10,-3,20,6,3);ctx.fill();ctx.stroke();for(const s of[-1,1]){ctx.beginPath();ctx.arc(s*10,-3,3.5,0,TAU);ctx.arc(s*10,3,3.5,0,TAU);ctx.fill()}ctx.restore();continue}
   if(b.key){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(runT*10);ctx.globalCompositeOperation='lighter';ctx.drawImage(glow('#ff6bd6',.8),-24,-24,48,48);ctx.globalCompositeOperation='source-over';ctx.fillStyle='#ff9be6';ctx.strokeStyle='#8a1f6a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(-6,0,6,0,TAU);ctx.fill();ctx.stroke();ctx.fillRect(-1,-2.5,14,5);ctx.fillRect(8,2,3,5);ctx.fillRect(12,2,3,4);ctx.restore();continue}
@@ -314,7 +315,7 @@ function hud(){
   const b=[];const add=(t,max,lbl,c)=>{if(t>0)b.push(`<div class="chip" style="color:${c}"><b style="background:${c}"></b><span style="color:#f5efe4">${lbl}</span><em><i style="width:${100*Math.min(1,t/max)}%"></i></em></div>`)};
   add(P.shieldT,5,'Shield','#5fb8ff');add(P.rapidT,6,'Rapid attack','#ffd166');add(P.stormT,3+.5*lv('power'),'Arrow Rain','#8fe3ff');add(P.whirlT,2+.3*lv('power'),'Whirlwind','#ff7a6b');add(P.magnetT,8,'Magnet','#ff7a9a');add(freezeAll,3,'Freeze','#8fe3ff');if(B&&B.type==='golem'&&B.vent>0)add(B.vent,2.8,'Core open','#ffb020');
   $('#buffs').innerHTML=b.join('');
-  const tags=[];for(const k of P.cu)tags.push(`<span class="tag c">${CU[k].n}</span>`);for(const k of P.fu)tags.push(`<span class="tag f">${FU[k].n}</span>`);for(const k of P.re)tags.push(`<span class="tag r">${RE[k].n}</span>`);
+  const tags=[];if(P.evo)tags.push(`<span class="tag e">${EVO[evoId()].n}</span>`);for(const k of P.cu)tags.push(`<span class="tag c">${CU[k].n}</span>`);for(const k of P.fu)tags.push(`<span class="tag f">${FU[k].n}</span>`);for(const k of P.re)tags.push(`<span class="tag r">${RE[k].n}</span>`);
   const th=tags.join('');if($('#tags').dataset.h!==th){$('#tags').innerHTML=th;$('#tags').dataset.h=th}
   $('#stats').innerHTML=`<b class="gold">${P.gold}</b> gold · <b>${P.projN}</b> ${projWord(P.projN)} · <b>${fmt(baseDmg())}</b> dmg · <b>${(1/fireInterval()).toFixed(1)}</b>/s`;
   const ot=objText();const oe=$('#obj');if(oe.textContent!==ot)oe.textContent=ot;
@@ -333,12 +334,12 @@ function renderModes(){const box=$('#modes');box.innerHTML='';for(const k in MOD
   const daily=selMode==='daily';$('#diffs').hidden=daily;$('#diffD').hidden=daily}
 let lockPick=null;
 function renderClasses(){
-  const box=$('#classes');box.innerHTML='';const daily=selMode==='daily',ds=daily?dailySpec():null;if(daily){selCls=ds.cls}
+  const box=$('#classes');box.innerHTML='';const daily=selMode==='daily',ds=daily?dailySpec():null;if(daily){selCls=ds.cls}if(!classOk(selCls))selCls='ranger';
   for(const k in CLASSES){const C=CLASSES[k],ml=mLevel(k),xp=S.mastery[k]||0,nx=MLV[Math.min(ml+1,MLV.length-1)],pv=MLV[ml],pc=ml>=MLV.length-1?100:Math.round(100*(xp-pv)/(nx-pv));
-    const b=document.createElement('button');b.className='cls'+(ml>=5?' gold':'');b.setAttribute('aria-pressed',k===selCls?'true':'false');b.setAttribute('aria-label',C.n);if(daily&&k!==selCls)b.disabled=true;
-    b.innerHTML=`<canvas width="200" height="120"></canvas><b>${C.n}</b><span class="mb"><i style="width:${pc}%"></i></span>`;
-    const g=b.querySelector('canvas').getContext('2d');g.scale(2,2);g.fillStyle='#211b29';g.fillRect(0,0,100,60);drawHero(g,50,38,k,{pal:daily?null:skinOf(k,S.skin[k]||0)});
-    b.onclick=()=>{if(daily)return;selCls=k;S.sel.cls=k;lockPick=null;saveGame();renderClasses();setTimeout(()=>{const f=document.querySelector('#classes .cls[aria-pressed="true"]');if(f)f.focus({preventScroll:true})},0)};box.appendChild(b)}
+    const lk=!classOk(k);const b=document.createElement('button');b.className='cls'+(ml>=5?' gold':'')+(lk?' lk':'');b.setAttribute('aria-pressed',k===selCls?'true':'false');b.setAttribute('aria-label',C.n+(lk?', locked':''));if(daily&&k!==selCls)b.disabled=true;
+    b.innerHTML=`<canvas width="200" height="120"></canvas><b>${lk?'Locked':C.n}</b><span class="mb"><i style="width:${lk?0:pc}%"></i></span>`;
+    const g=b.querySelector('canvas').getContext('2d');g.scale(2,2);g.fillStyle='#211b29';g.fillRect(0,0,100,60);drawHero(g,50,38,k,{pal:lk?{col:'#2a2433',hi:'#3a3346',dk:'#15111b'}:daily?null:skinOf(k,S.skin[k]||0)});
+    b.onclick=()=>{if(daily)return;if(lk){$('#clsInfo').innerHTML=`<div class="ch"><b>${C.n}</b><span class="ml">Locked</span></div><p>Beat a boss with the Ranger, Mage, Gunner and Berserker to unlock the ${C.n}.</p>`;$('#loadout').innerHTML='';return}selCls=k;S.sel.cls=k;lockPick=null;saveGame();renderClasses();setTimeout(()=>{const f=document.querySelector('#classes .cls[aria-pressed="true"]');if(f)f.focus({preventScroll:true})},0)};box.appendChild(b)}
   const k=selCls,C=CLASSES[k],ml=mLevel(k),wi=daily?0:weapOf(k),wd=WEAPS[k][wi].wd||C.wd,bk=k+'_'+(daily?'hard':diff);
   $('#clsInfo').innerHTML=`<div class="ch"><b>${C.n}</b><span class="ml">Mastery ${ml}${ml<MLV.length-1?' · next: '+MREW[ml+1]:''}</span></div><p>${wd}</p><p class="sk">${C.sd}</p><span class="hp">${Math.round((C.hp+(ml>=2?10:0))*DIFF[daily?'hard':diff].pHp)} HP${S.stats.best[bk]?' · Best '+fmt(S.stats.best[bk]):''}</span>`;
   renderLoadout();
@@ -358,23 +359,25 @@ function renderLoadout(){const box=$('#loadout');const k=selCls;box.innerHTML=''
 function iconCanvas(k){const c=document.createElement('canvas');c.width=108;c.height=108;const g=c.getContext('2d');g.translate(54,54);drawIcon(g,k,38);return c}
 function buildOffer(){
   const n=P.cu.has('greed')?4:3,out=[];
+  if(evoReady())out.push({t:'evo',k:evoId()});
   const fus=Object.keys(FU).filter(f=>{const F=FU[f];return!P.fu.has(f)&&(P.sk[F.a]||0)>0&&(P.sk[F.b]||0)>0&&(P.sk[F.a]+P.sk[F.b])>=3});
   if(fus.length&&Math.random()<.75)out.push({t:'fuse',k:pick(fus)});
   const cs=Object.keys(CU).filter(c=>!P.cu.has(c)&&unlocked('curse',c));
   if(cs.length&&P.level>=3&&Math.random()<.4)out.push({t:'curse',k:pick(cs)});
   const pool=Object.keys(SK).filter(k=>(P.sk[k]||0)<SK[k].max&&!P.fused.has(k)&&unlocked('skill',k));
   while(out.length<n&&pool.length)out.push({t:'skill',k:pool.splice(Math.floor(Math.random()*pool.length),1)[0]});
-  return shuffle(out);
+  const ev=out.filter(o=>o.t==='evo');return ev.concat(shuffle(out.filter(o=>o.t!=='evo')));
 }
 function renderCards(list,relic){
   const box=$('#cards');box.innerHTML='';
-  list.forEach((o,i)=>{const b=document.createElement('button');b.className='card'+(o.t==='curse'?' curse':o.t==='fuse'?' fuse':o.t==='relic'?' relic':'');b.id='card'+i;
+  list.forEach((o,i)=>{const b=document.createElement('button');b.className='card'+(o.t==='curse'?' curse':o.t==='fuse'?' fuse':o.t==='relic'?' relic':o.t==='evo'?' evo':'');b.id='card'+i;
     let name,tag,desc;
     if(o.t==='skill'){const lvN=P.sk[o.k]||0;name=SK[o.k].n;tag=`<span class="lv ${lvN?'':'new'}">${lvN?'Lv '+(lvN+1):'New'}</span>`;desc=SK[o.k].d}
+    else if(o.t==='evo'){const E=EVO[o.k];name=E.n;tag='<span class="lv ev">Evolution</span>';desc=`Your ${P.C.wn} evolves. ${E.d} +20% damage.`}
     else if(o.t==='fuse'){const F=FU[o.k];name=F.n;tag='<span class="lv fu">Fusion</span>';desc=`Uses up ${SK[F.a].n} and ${SK[F.b].n}. ${F.d}`}
     else if(o.t==='curse'){const c=CU[o.k];name=c.n;tag='<span class="lv cu">Curse</span>';desc=`<span class="up">${c.up}.</span> <span class="dn">${c.dn}.</span> Score +25%.`}
     else{name=RE[o.k].n;tag='<span class="lv re">Relic</span>';desc=RE[o.k].d}
-    b.appendChild(iconCanvas(o.k));const d=document.createElement('div');d.innerHTML=`<b>${name}</b>${tag}<p>${desc}</p>`;b.appendChild(d);
+    b.appendChild(iconCanvas(o.t==='evo'?'wenh':o.k));const d=document.createElement('div');d.innerHTML=`<b>${name}</b>${tag}<p>${desc}</p>`;b.appendChild(d);
     const kb=document.createElement('span');kb.className='key';kb.textContent=i+1;b.appendChild(kb);
     b.onclick=()=>relic?chooseRelic(i):chooseCard(i);box.appendChild(b)});
   setTimeout(()=>{const c=$('#card0');if(c)c.focus({preventScroll:true})},50);
@@ -387,7 +390,8 @@ function openLevel(){
 function afterPick(){if(pendingLv>0){openLevel()}else if(pendingRelic){pendingRelic=false;openRelic()}else if(resumeFn){const f=resumeFn;resumeFn=null;$('#ovLevel').hidden=true;f()}else{state='play';$('#ovLevel').hidden=true;P.iframe=Math.max(P.iframe,.8);last=performance.now()}}
 function chooseCard(i){
   if(state!=='levelup')return;const o=offerList[i];if(!o)return;pendingLv--;
-  if(o.t==='skill'){P.sk[o.k]=(P.sk[o.k]||0)+1;if(ELEMN[o.k])P.elem=o.k;recalc();if(o.k==='vital')heal(P.maxHp*.25);pop(SK[o.k].n,P.x,P.y-70,'#ffd166',32);spark(P.x,P.y,'#ffd166',30,300,.6,3)}
+  if(o.t==='evo')evolve();
+  else if(o.t==='skill'){P.sk[o.k]=(P.sk[o.k]||0)+1;if(ELEMN[o.k])P.elem=o.k;recalc();if(o.k==='wenh'&&P.sk.wenh>=SK.wenh.max)later(.6,evoHint);if(o.k==='vital')heal(P.maxHp*.25);pop(SK[o.k].n,P.x,P.y-70,'#ffd166',32);spark(P.x,P.y,'#ffd166',30,300,.6,3)}
   else if(o.t==='fuse'){const F=FU[o.k];P.fu.add(o.k);S.codex.fuse[o.k]=1;run.fusions++;if(run.fusions>=3)ach('fuse3');P.fused.add(F.a);P.fused.add(F.b);P.sk[F.a]=0;P.sk[F.b]=0;if(ELEMN[F.a])P.elem=F.a;recalc();pop(F.n,P.x,P.y-70,'#d6c2ff',34,'fusion');sfx.fuse();flashA=.4;flashCol='181,139,255';ringFx(P.x,P.y,'181,139,255',120,.5,6);spark(P.x,P.y,'#d6c2ff',40,380,.7,4)}
   else if(o.t==='curse'){P.cu.add(o.k);recalc();pop(CU[o.k].n,P.x,P.y-70,'#ff4d8a',32,'curse');sfx.curse();flashA=.3;flashCol='255,40,110'}
   afterPick();
@@ -396,7 +400,7 @@ function reroll(){if(state!=='levelup'||P.rerolls<=0)return;P.rerolls--;offerLis
 function skipCard(){if(state!=='levelup')return;pendingLv--;heal(P.maxHp*.2);pop('Healed',P.x,P.y-70,'#4be07a',30);afterPick()}
 function openRelic(){
   const pool=Object.keys(RE).filter(k=>!P.re.has(k)&&unlocked('relic',k));if(!pool.length){afterPick();return}
-  state='relic';relicList=shuffle(pool).slice(0,3).map(k=>({t:'relic',k}));
+  state='relic';relicList=evoRelicPick(shuffle(pool).slice(0,3).map(k=>({t:'relic',k})));
   $('#lvTitle').textContent='Pick a relic';$('#lvSub').textContent='Relics last the whole run.';$('#btnReroll').parentElement.hidden=true;
   renderCards(relicList,true);$('#ovLevel').hidden=false;sfx.fuse();
 }

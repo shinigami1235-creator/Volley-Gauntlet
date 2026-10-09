@@ -23,12 +23,13 @@ The title screen has an Install app button when your browser can install it. On 
 - Shoot a gold-rimmed gate to raise its number before you walk through it.
 - Dash into pink shots to parry them. A parry heals you, recharges your class skill and gives back most of your dash.
 - Beat the mini-boss halfway through a stage for a relic and a visit from the wandering merchant.
-- The pause menu has phone settings: flick to dash, auto skill, which side the buttons sit on, and vibration.
+- The pause menu has phone settings: flick to dash, auto skill, which side the buttons sit on, vibration and full screen.
 
 ## What's in it
 
-- 4 heroes (Ranger, Mage, Gunner and Berserker), each with 4 weapons you unlock by playing.
-- 8 bosses with three phases each, plus 3 mini-bosses. Bosses can roll twists like Enraged or Regenerating.
+- 5 heroes (Ranger, Mage, Gunner, Berserker and Summoner), each with 4 weapons you unlock by playing. The Summoner unlocks once you beat a boss with the other four.
+- Every weapon can evolve. Max its weapon upgrade and hold its matching relic, and the next level-up offers the evolution. The Codex has a page that tracks the ones you've found.
+- 8 bosses with three phases each, plus 3 mini-bosses. Bosses can roll twists like Enraged or Regenerating. Clear a Nightmare Gauntlet run to find out who has been making the ads.
 - 4 modes: Gauntlet, Endless, Boss Rush and a Daily run that is the same for everyone each day.
 - 4 difficulties: Story, Normal, Hard and Nightmare.
 - The Forge, where Embers from your runs buy permanent upgrades and skins.

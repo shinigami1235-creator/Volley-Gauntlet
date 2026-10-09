@@ -1,7 +1,7 @@
 
 /* ================= set pieces ================= */
 let setp=null,walls=[],squeeze=0,darkT=0,darkBoss=false,flood=false,bossScrollStop=false,shrineHold=false,scrollM=1;
-function setPool(){const p={airdrop:1.2,bombrun:1.2,lava:1,shrine:.8,lock:.8,squeeze:.8,dark:.6};const bs=BIOMES[BIOME].set;for(const k in bs)p[k]*=bs[k];if(dm('dark'))p.dark=8;if(stage===1&&stageT<30&&BIOME==='dungeon'){delete p.dark;delete p.squeeze;delete p.lock}return p}
+function setPool(){const p={airdrop:1.2,bombrun:1.2,lava:1,shrine:.8,lock:.8,squeeze:.8,dark:.6};const bs=BIOMES[BIOME].set;for(const k in bs)p[k]=(p[k]??.5)*bs[k];if(dm('dark'))p.dark=8;if(stage===1&&stageT<30&&BIOME==='dungeon'){delete p.dark;delete p.squeeze;delete p.lock}return p}
 function endSet(){if(!setp)return;if(setp.k==='lock')lockReward();setp=null;darkT=0}
 function lockReward(){for(let i=0;i<14;i++)addGem({x:P.x+rnd(-60,60),y:ZTOP-40+rnd(-30,30),v:2,vx:rnd(-150,150),vy:rnd(-60,160),big:1});dropPickup(W/2,ZTOP-40);P.rerolls++;banner('Gates open<small>+1 reroll.</small>','#8ff0b5');sfx.level()}
 function spawnSet(k){
@@ -14,6 +14,7 @@ function spawnSet(k){
     case'lock':setp={k,t:0,dur:16*(D.set>1?1.2:1),spT:1};banner('Ambush<small>Survive until the gates open.</small>','#ff6b85');sfx.boss();break;
     case'shrine':hazards.push({k:'shrine',x:rnd(L+90,R-90),y:-80,r:62,prog:0,spT:0});setp={k,t:0,dur:13};banner('Shrine<small>Stand in the circle to earn a free skill.</small>','#8fe3ff');break;
     case'dark':setp={k,t:0,dur:14};darkT=14;banner('Lights out<small>Your light is all you get.</small>','#c8c2ff');for(let i=0;i<4;i++)later(1+i*2.5,()=>{spawnStalkers();for(let j=0;j<3;j++)spawnEnemy('ghost',rnd(L+30,R-30),-20)});break;
+    case'popups':{setp={k,t:0,dur:9};banner('Pop-up ads<small>Shoot them closed before they cover the screen.</small>','#ff4fa3');const n=ri(3,4)+(D.extra?1:0);for(let i=0;i<n;i++)later(.5+i*1.3,()=>{if(state!=='dying')spawnPopup(rnd(L+80,R-80),rnd(-70,ZTOP-120))});break}
     case'squeeze':setp={k,t:0,dur:10};banner('The walls are closing<small>Stay off the spikes.</small>','#ff6b85');later(1,()=>spawnScatter());later(4,()=>spawnHazard(pick(['rocks','saw','mines'])));break;
   }
 }

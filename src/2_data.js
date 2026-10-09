@@ -100,6 +100,7 @@ function effInfo(e){
     case'crit':return{big:'+'+v+'%',sub:'crit',good:true};
     case'dash':return{big:sg+v+'%',sub:'dash cooldown',good:v<0};
     case'curse':return{big:CU[v].n,sub:'curse: '+CU[v].up.toLowerCase(),good:true,curse:true};
+    case'rig':return{big:'+'+v,sub:projWord(2),good:true};
   }
 }
 

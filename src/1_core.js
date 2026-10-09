@@ -280,6 +280,8 @@ const CLASSES={
     wd:'A stream of bullets. Aim drifts while you move.',sd:'Grenade: a big blast where the enemies are thickest.'},
   berserker:{n:'Berserker',col:'#b8322e',hi:'#ff7a6b',dk:'#5a1210',hp:130,w:'axe',iv:.62,dmg:11,cap:5,proj:1,sk:'whirl',skN:'Spin',cd:13,
     wd:'Axes fly out and come back, hitting 3 enemies each. More HP, heals on kills.',sd:'Whirlwind: spin for 2 seconds behind a shield. Hits and knocks back everything around you, and nothing hurts you by touching you.'},
+  summoner:{n:'Summoner',col:'#2f7a5a',hi:'#8fffcf',dk:'#0f3326',hp:90,w:'bone',iv:1.1,dmg:9,cap:10,proj:2,sk:'feast',skN:'Feast',cd:10,
+    wd:'Raises skeletons that walk to the nearest enemy and hack at it. They crumble after 10 seconds. Multishot raises more of them.',sd:'Feast: every minion you have bursts in a green blast, and you heal a little for each one. With no minions out, it raises three.'},
 };
 function drawHero(g,x,y,cls,o={}){
   const C=Object.assign({},CLASSES[cls],o.pal||{}),walk=o.walk||0,pull=o.pull||0,t=o.t||0;if(C.prism){const h=(t*90)%360;C.col=`hsl(${h},62%,50%)`;C.hi=`hsl(${(h+40)%360},95%,78%)`;C.dk=`hsl(${h},65%,20%)`}
@@ -298,6 +300,11 @@ function drawHero(g,x,y,cls,o={}){
   if(cls==='gunner'){g.fillStyle='#2a2a33';g.fillRect(x-9,y-9,18,5);g.fillStyle='#7fe7ff';g.beginPath();g.arc(x-4,y-7,2.6,0,TAU);g.arc(x+4,y-7,2.6,0,TAU);g.fill();
     g.fillStyle='#3a3a46';g.fillRect(x-4,y-30+pull*3,8,22);g.fillStyle='#6b6b7a';g.fillRect(x-5.5,y-14+pull*3,11,8);g.fillStyle='#222';g.fillRect(x-2,y-33+pull*3,4,4);
     if(pull>.5){g.fillStyle='#ffe066';g.beginPath();g.moveTo(x,y-44);g.lineTo(x-5,y-33);g.lineTo(x+5,y-33);g.fill()}}
+  if(cls==='summoner'){g.fillStyle=C.dk;g.beginPath();g.moveTo(x-12.5,y-1);g.quadraticCurveTo(x-14,y-17,x,y-21);g.quadraticCurveTo(x+14,y-17,x+12.5,y-1);g.quadraticCurveTo(x,y-9,x-12.5,y-1);g.fill();
+    g.fillStyle='#0c1a14';g.beginPath();g.ellipse(x,y-6,7,5,0,0,TAU);g.fill();g.fillStyle='#7dffb0';g.beginPath();g.arc(x-2.6,y-6,1.5,0,TAU);g.arc(x+2.6,y-6,1.5,0,TAU);g.fill();
+    g.strokeStyle='#5a4a3a';g.lineWidth=3;g.beginPath();g.moveTo(x-15,y+10);g.lineTo(x-15,y-21);g.stroke();
+    g.fillStyle='#e8e0cc';g.beginPath();g.arc(x-15,y-25,4.6,0,TAU);g.fill();g.fillRect(x-17.5,y-22,5,3);g.fillStyle='#123a2a';g.fillRect(x-17,y-26.5,1.7,2);g.fillRect(x-14.4,y-26.5,1.7,2);
+    const fg=g.createRadialGradient(x-15,y-31,0,x-15,y-31,8+pull*5);fg.addColorStop(0,'#fff');fg.addColorStop(.4,'#7dffb0');fg.addColorStop(1,'rgba(125,255,176,0)');g.fillStyle=fg;g.beginPath();g.arc(x-15,y-31,8+pull*5,0,TAU);g.fill()}
   if(cls==='berserker'){g.fillStyle='#8b90a0';g.beginPath();g.arc(x,y-6,10.5,Math.PI,0);g.fill();g.fillStyle='#efe2c4';for(const s of[-1,1]){g.beginPath();g.moveTo(x+s*8,y-10);g.quadraticCurveTo(x+s*18,y-14,x+s*16,y-24);g.quadraticCurveTo(x+s*14,y-15,x+s*6,y-6);g.fill()}
     if(!o.noAxe){g.strokeStyle='#6b4423';g.lineWidth=3;g.beginPath();g.moveTo(x+13,y+8);g.lineTo(x+13,y-18);g.stroke();g.fillStyle='#c9cdd8';g.beginPath();g.moveTo(x+13,y-18);g.quadraticCurveTo(x+26,y-20,x+24,y-6);g.lineTo(x+13,y-10);g.fill()}}
 }
@@ -401,7 +408,7 @@ function thr(k,ms){const n=performance.now();if(sfxLast[k]&&n-sfxLast[k]<ms)retu
 function tone(f,dur,type,vol,slide=0,delay=0){if(!AC||muted)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.02)}
 function noise(dur,vol,freq){if(!AC||muted)return;const t=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;f.type='lowpass';f.frequency.setValueAtTime(freq,t);f.frequency.exponentialRampToValueAtTime(60,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f).connect(g).connect(AC.destination);s.start(t);s.stop(t+dur)}
 const sfx={
-  shoot(){if(thr('s',75))return;const c=P&&P.cls;if(c==='gunner')tone(rnd(180,240),.04,'square',.012,-60);else if(c==='mage')tone(rnd(500,600),.08,'sine',.02,300);else if(c==='berserker')noise(.06,.02,3000);else tone(rnd(820,980),.05,'triangle',.018,-420)},
+  shoot(){if(thr('s',75))return;const c=P&&P.cls;if(c==='gunner')tone(rnd(180,240),.04,'square',.012,-60);else if(c==='mage')tone(rnd(500,600),.08,'sine',.02,300);else if(c==='berserker')noise(.06,.02,3000);else if(c==='summoner')tone(rnd(140,190),.12,'sine',.016,120);else tone(rnd(820,980),.05,'triangle',.018,-420)},
   hit(){if(thr('h',45))return;tone(rnd(300,380),.04,'square',.012,-120)},
   kill(){if(thr('k',55))return;tone(rnd(180,240),.09,'square',.022,-110);noise(.06,.03,2200)},
   gate(good){if(good){[523,659,784,1046].forEach((f,i)=>tone(f,.12,'square',.035,0,i*.05))}else{tone(300,.25,'sawtooth',.04,-180)}},
