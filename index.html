@@ -1804,7 +1804,7 @@ function miniAI(e,dt,frozen){
     case'ogre':{const a=['charge','slam','rocks','charge','rocks','slam'][e.atkI++%6];e.atkT=cd+.3;
       if(a==='charge'){const an=Math.atan2(P.y-e.y,P.x-e.x),w=T(.8);Z({k:'l',x1:e.x,y1:e.y,x2:e.x+Math.cos(an)*900,y2:e.y+Math.sin(an)*900,w:e.r*2,warn:w,dur:0,dmg:0,fixed:true});
         later(w,()=>{if(!e.alive||e.mode!=='fight')return;e.mode='charge';e.vx=Math.cos(an)*640;e.vy=Math.sin(an)*640;e.hold=.8;sfx.boom()});e.atkT+=1.8}
-      if(a==='slam'){const w=T(.6);Z({k:'c',x:e.x,y:e.y,r:e.r+20,warn:w,dur:0,dmg:0,fixed:true});for(let i=0;i<(p2?3:2);i++)Z({k:'wave',x:e.x,y:e.y,rr:-1,warn:w+i*.4,dur:2,spd:270,dmg:22,col:'255,170,80',fixed:true,onFire:z=>{z.rr=e.r;addShake(8);sfx.boom();smoke(z.x,z.y+e.r,6,16)}});e.atkT+=1}
+      if(a==='slam'){const w=T(.6);Z({k:'c',x:e.x,y:e.y,r:e.r+20,warn:w,dur:0,dmg:0,fixed:true});for(let i=0;i<2;i++)Z({k:'wave',x:e.x,y:e.y,rr:-1,warn:w+i*.4,dur:2,spd:270,dmg:22,col:'255,170,80',fixed:true,onFire:z=>{z.rr=e.r;addShake(8);sfx.boom();smoke(z.x,z.y+e.r,6,16)}});e.atkT+=1}
       if(a==='rocks')rockRain(p2?6:4,48,20);break}
     case'witch':{const a=['spiral','curse','aim','summon','curse','spiral'][e.atkI++%6];e.atkT=cd+.3;tele(e,rnd(L+80,R-80),rnd(150,240));
       later(.4,()=>{if(!e.alive)return;
