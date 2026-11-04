@@ -1161,7 +1161,7 @@ function updateProjs(dt){
       else if(a.x>R-4){if(a.wb>0){a.wb--;a.x=R-4;a.vx=-a.vx;spark(a.x,a.y,'#fff',2,100,.2,2)}else{a.dead=true;continue}}
     }else{a.x=clamp(a.x,L+6,R-6)}
     if(a.y<-60||a.y>H+60){if(a.k==='axe'&&a.ph===0){a.ph=1;a.hits.clear()}else if(a.k!=='axe'){a.dead=true;continue}}
-    if(a.k!=='rain'||a.sky)for(const row of gateRows){if(row.used)continue;if(Math.abs(a.y-row.y)<26)for(const g of row.gates){if(g.grow&&a.x>g.x+6&&a.x<g.x+g.w-6){if(a.k==='axe'){if(a.gRow===row)break;a.gRow=row;a.ph=1;growHit(row,g,a.x,3)}else{a.dead=true;g.hits+=a.k==='bullet'?Math.min(1,P.C.iv/.36):1;const need=gateNeed();if(g.hits>=need&&g.effs[0].v<GROWCAP){g.hits=0;g.effs[0].v++;g.bump=.18;sfx.grow()}spark(a.x,row.y+24,'#ffd166',2,120,.2,2.5)}break}}if(a.dead)break}
+    if(a.k!=='rain'||a.sky)for(const row of gateRows){if(row.used)continue;if(Math.abs(a.y-row.y)<26)for(const g of row.gates){if(g.grow&&g.effs[0].v<GROWCAP&&a.x>g.x+6&&a.x<g.x+g.w-6){if(a.k==='axe'){if(a.gRow===row)break;a.gRow=row;a.ph=1;growHit(row,g,a.x,3)}else{a.dead=true;g.hits+=a.k==='bullet'?Math.min(1,P.C.iv/.36):1;const need=gateNeed();if(g.hits>=need&&g.effs[0].v<GROWCAP){g.hits=0;g.effs[0].v++;g.bump=.18;sfx.grow()}spark(a.x,row.y+24,'#ffd166',2,120,.2,2.5)}break}}if(a.dead)break}
     if(a.dead)continue;
     for(const h of hazards){if(h.dead||!h.shoot)continue;if(h.k==='boulder'&&h.warn>0)continue;if((a.x-h.x)**2+(a.y-h.y)**2<(h.r+a.sz)**2){h.hp-=a.dmg;h.flash=.06;if(a.k!=='lance'&&a.k!=='axe')a.dead=true;spark(a.x,a.y,'#d8c9a8',3,140,.25,2.5);break}}
     if(a.dead)continue;
@@ -1243,7 +1243,7 @@ function badEff(big){
 }
 const GROWCAP=5;function gateNeed(){return 6+stage*2+Math.floor(P.projN/2)}
 function growHit(row,g,x,n=1){for(let i=0;i<n;i++){g.hits++;const need=gateNeed();if(g.hits>=need&&g.effs[0].v<GROWCAP){g.hits=0;g.effs[0].v++;g.bump=.18;sfx.grow()}}spark(x,row.y+24,'#ffd166',3,120,.2,2.5)}
-function growGateNear(x,y,range,pad){for(const row of gateRows){if(row.used||row.y>y||row.y<y-range)continue;for(const g of row.gates)if(g.grow&&x>g.x-pad&&x<g.x+g.w+pad)return[row,g]}return null}
+function growGateNear(x,y,range,pad){for(const row of gateRows){if(row.used||row.y>y||row.y<y-range)continue;for(const g of row.gates)if(g.grow&&g.effs[0].v<GROWCAP&&x>g.x-pad&&x<g.x+g.w+pad)return[row,g]}return null}
 function gateClass(g){const effs=g.opts?g.opts[g.oi]:g.effs;if(effs.some(e=>e.t==='curse'))return'curse';const inf=effs.map(effInfo);const gd=inf.some(i=>i.good),bd=inf.some(i=>!i.good);return gd&&bd?'pact':gd?'good':'bad'}
 function gateEffs(g){return g.opts?g.opts[g.oi]:g.effs}
 function spawnGateRow(){
