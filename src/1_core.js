@@ -11,8 +11,8 @@ const STORE=(()=>{const mem=new Map();let ls=null;try{ls=window.localStorage;ls.
 const OPT=(()=>{let o={};try{o=JSON.parse(STORE.get('vg_opts')||'{}')||{}}catch(e){o={}}return Object.assign({flick:true,auto:false,left:false,buzz:true,full:true},o)})();
 function saveOpts(){STORE.set('vg_opts',JSON.stringify(OPT))}
 function buzz(p){if(OPT.buzz&&navigator.vibrate){try{navigator.vibrate(p)}catch(e){}}}
-const FONT='"Segoe UI Black","Arial Black",system-ui,sans-serif';
-const BFONT='system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+const FONT='"Lilita One","Segoe UI Black","Arial Black",system-ui,sans-serif';
+const BFONT='"Nunito",system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
 function shade(hex,p){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;if(p>=0){r+=(255-r)*p;g+=(255-g)*p;b+=(255-b)*p}else{r*=1+p;g*=1+p;b*=1+p}return`rgb(${r|0},${g|0},${b|0})`}
 function fmt(n){n=Math.round(n);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':String(n)}
 // Every cached image is made here. Android Chrome can wipe these when the app is in the background or short on memory,
@@ -50,7 +50,7 @@ function resize(){
 let floorTile,wallL,wallR,vignette;const TH=384;
 function seeded(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
 function buildTiles(){
-  const fw=R-L,sr=seeded(7),BB=(typeof BIOMES!=='undefined'&&BIOMES[BIOME])||{floor:['#3a3643','#35323e','#3e3a47','#322f3a'],grout:'#17141c',wall:['#2a2630','#26222c','#2e2934'],wallBg:'#1d1a22',ledge:'#4a4553',moss:'rgba(90,120,70,.22)'};
+  const fw=R-L,sr=seeded(7),BB=(typeof ART2!=='undefined'&&ART2&&FLOOR2[BIOME]&&FLOOR2[BIOME]())||(typeof BIOMES!=='undefined'&&BIOMES[BIOME])||{floor:['#3a3643','#35323e','#3e3a47','#322f3a'],grout:'#17141c',wall:['#2a2630','#26222c','#2e2934'],wallBg:'#1d1a22',ledge:'#4a4553',moss:'rgba(90,120,70,.22)'};
   floorTile=mk(fw*TS,TH*TS,g=>{
     g.scale(TS,TS);g.fillStyle=BB.grout;g.fillRect(0,0,fw,TH);
     const cols=4,sw=fw/cols,sh=96;
@@ -62,6 +62,7 @@ function buildTiles(){
         if(sr()<.55){g.strokeStyle='rgba(10,8,14,.55)';g.lineWidth=1.3;g.beginPath();let cx=x+10+sr()*(sw-20),cy=y+8+sr()*20;g.moveTo(cx,cy);for(let k=0;k<4;k++){cx+=(sr()-.5)*28;cy+=8+sr()*10;if(cy>y+sh-8)break;g.lineTo(cx,cy)}g.stroke()}
         if(sr()<.35){g.fillStyle=BB.moss;for(let k=0;k<6;k++){g.beginPath();g.arc(x+6+sr()*(sw-12),y+sh-10-sr()*12,1+sr()*2.2,0,TAU);g.fill()}}
       }}
+    if(typeof ART2!=='undefined'&&ART2)floorDecor(g,fw,TH,sr,BIOME);
   });
   const wallArt=side=>mk(WALL*TS,TH*TS,g=>{
     g.scale(TS,TS);g.fillStyle=BB.wallBg;g.fillRect(0,0,WALL,TH);
@@ -112,8 +113,8 @@ const AFFIX={
 
 /* ---------------- enemy sprites ---------------- */
 const SPR={};
-function paintEnemy(g,type,r,col){
-  g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(0,r*.8,r*.95,r*.34,0,0,TAU);g.fill();
+function paintEnemy(g,type,r,col,ns){
+  if(!ns){g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(0,r*.8,r*.95,r*.34,0,0,TAU);g.fill()}
   const body=fn=>{const gr=g.createRadialGradient(-r*.35,-r*.45,r*.1,0,0,r*1.1);gr.addColorStop(0,shade(col,.4));gr.addColorStop(.55,col);gr.addColorStop(1,shade(col,-.5));g.fillStyle=gr;g.beginPath();fn();g.fill();g.strokeStyle=shade(col,-.65);g.lineWidth=Math.max(1,r*.07);g.stroke()};
   const eyes=(dy=.1,pup='#120a10',sz=1)=>{for(const s of[-1,1]){g.fillStyle='#fff';g.beginPath();g.ellipse(s*r*.34,r*dy,r*.22*sz,r*.25*sz,0,0,TAU);g.fill();g.fillStyle=pup;g.beginPath();g.arc(s*r*.31,r*(dy+.08),r*.11*sz,0,TAU);g.fill()}
     g.strokeStyle='rgba(20,5,10,.85)';g.lineWidth=r*.1;g.lineCap='round';for(const s of[-1,1]){g.beginPath();g.moveTo(s*r*.58,r*(dy-.28));g.lineTo(s*r*.14,r*(dy-.1));g.stroke()}};
@@ -270,7 +271,7 @@ function paintEnemy(g,type,r,col){
 }
 // Each enemy gets a dark outline with a faint light rim, so it stays readable over the floor and over effects.
 function outlineOf(c){const ring=(g,rad,col)=>{const t=mk(c.width,c.height,h=>{for(let i=0;i<16;i++){const a=i*TAU/16;h.drawImage(c,Math.cos(a)*rad,Math.sin(a)*rad)}h.globalCompositeOperation='source-in';h.fillStyle=col;h.fillRect(0,0,c.width,c.height)});g.drawImage(t,0,0)};return mk(c.width,c.height,g=>{ring(g,6,'rgba(255,236,214,.5)');ring(g,3.5,'#08040c')})}
-function buildSprites(){for(const t in ED){if(BART[t]){const b=bossStill(t,ED[t].r);SPR[t]={c:b.c,f:b.c,s:b.s};continue}const r=ED[t].r,S=Math.ceil(r*(t==='bat'?5:3.8))*2;const c=mk(S,S,g=>{g.translate(S/2,S/2);g.scale(2,2);paintEnemy(g,t==='clone'?'lich':t,r,ED[t].col)});SPR[t]={c,f:flashOf(c),o:outlineOf(c),s:S/2}}}
+function buildSprites(){for(const t in ED){if(BART[t]){const b=bossStill(t,ED[t].r);SPR[t]={c:b.c,f:b.c,s:b.s};continue}const r=ED[t].r,S=Math.ceil(r*(t==='bat'?5:3.8))*2;const paint=ns=>g=>{g.translate(S/2,S/2);g.scale(2,2);if(ART2&&PAINT2[t]){if(!ns){g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(0,r*.85,r*.95,r*.32,0,0,TAU);g.fill()}PAINT2[t](g,r,ED[t].col)}else paintEnemy(g,t==='clone'?'lich':t,r,ED[t].col,ns)};const c=mk(S,S,paint(false)),bare=mk(S,S,paint(true));SPR[t]={c,f:flashOf(bare),o:outlineOf(bare),s:S/2}}}
 
 /* ---------------- heroes ---------------- */
 const CLASSES={

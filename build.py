@@ -4,11 +4,15 @@ Usage: python build.py [output.html] [--pwa]   (default: volley-gauntlet.html)
 --pwa adds the web app manifest and service worker links for the GitHub Pages version."""
 import base64, json, os
 H = os.path.dirname(os.path.abspath(__file__))
-PARTS = ['0_shell.html','1_core.js','2_data.js','3_sys.js','3b_boss.js','3c_set.js','5_meta.js','3d_evo.js','3e_summon.js','3f_ad.js','6_music.js','4b_bossart.js','4c_adart.js','4_ui.js']
+PARTS = ['0_shell.html','1_core.js','1b_art2.js','2_data.js','3_sys.js','3b_boss.js','3c_set.js','5_meta.js','3d_evo.js','3e_summon.js','3f_ad.js','6_music.js','4b_bossart.js','4c_adart.js','4_ui.js']
 src = ''.join(open(os.path.join(H,'src',p),encoding='utf-8').read() for p in PARTS)
 def b64(p): return base64.b64encode(open(os.path.join(H,p),'rb').read()).decode()
-# No embedded fonts: Nioret World's game policy asks for system fonts.
-assert '/*FONTS*/' not in src
+# Lilita One (titles) and Nunito (text) are embedded so the game looks the same on every device. Both are SIL Open Font License.
+fonts = ('@font-face{font-family:"Lilita One";font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}' % b64('assets/fonts/LilitaOne.woff2')
+  + '@font-face{font-family:"Nunito";font-weight:400 700;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}' % b64('assets/fonts/Nunito-700.woff2')
+  + ''.join('@font-face{font-family:"Nunito";font-weight:%s;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}' % (w, b64('assets/fonts/Nunito-%s.woff2' % w)) for w in ('800','900')))
+assert src.count('/*FONTS*/')==1
+src = src.replace('/*FONTS*/', fonts)
 meta = json.load(open(os.path.join(H,'music/samples.json')))
 samp = {k: b64('music/mp3/%s.mp3' % k) for k in meta}
 assert src.count('/*SAMPLES*/{}')==1 and src.count('/*SMETA*/{}')==1

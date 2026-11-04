@@ -28,7 +28,7 @@ BPAINT.admaker=function(g,e,r,t){
   if(rage){g.strokeStyle='rgba(42,22,64,.6)';g.lineWidth=1.5;g.beginPath();g.moveTo(sx+sw*.7,sy);g.lineTo(sx+sw*.55,sy+sh*.3);g.lineTo(sx+sw*.78,sy+sh*.45);g.lineTo(sx+sw*.6,sy+sh*.7);g.stroke()}
   // play now button under the screen
   const pb=by+bh-r*.42,pw2=bw*.7,pulse=1+Math.sin(t*6)*.04;g.save();g.translate(0,pb);g.scale(pulse,pulse);const pg=g.createLinearGradient(0,-r*.14,0,r*.14);pg.addColorStop(0,'#7dffb0');pg.addColorStop(1,'#14c060');g.fillStyle=pg;g.beginPath();g.roundRect(-pw2/2,-r*.14,pw2,r*.28,r*.14);g.fill();g.strokeStyle='#073d22';g.lineWidth=2;g.stroke();
-  g.fillStyle='#fff';g.font=`900 ${Math.round(r*.15)}px "Segoe UI Black","Arial Black",system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText('PLAY NOW',0,r*.01);g.restore();
+  g.fillStyle='#fff';g.font=`900 ${Math.round(r*.15)}px "Lilita One","Segoe UI Black","Arial Black",system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText('PLAY NOW',0,r*.01);g.restore();
   // top hat
   g.fillStyle='#1c1430';g.beginPath();g.ellipse(0,by+r*.02,r*.62,r*.12,0,0,TAU);g.fill();g.beginPath();g.roundRect(-r*.38,by-r*.62,r*.76,r*.64,r*.06);g.fill();g.fillStyle='#ff4fa3';g.fillRect(-r*.38,by-r*.16,r*.76,r*.12);
   g.fillStyle='#ffd166';g.font=`900 ${Math.round(r*.14)}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText('$',0,by-r*.38);
