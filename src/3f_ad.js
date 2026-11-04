@@ -42,8 +42,8 @@ function adMakerAI(e,dt,K,cd,Z){
     case'swipe':{const gx=rnd(L+80,R-80),gw=120,w=T(.8);pop('Swipe up!',W/2,ZTOP-40,'#7fe7ff',26);
       for(const [x1,x2] of[[L,gx-gw/2],[gx+gw/2,R]])Z({k:'l',x1,y1:ZTOP-80,x2,y2:ZTOP-80,w:20,warn:w,dur:2.4,dmg:20,cont:true,col:'127,231,255',beam:true,fixed:true,follow:z=>{const yy=ZTOP-80+Math.max(0,z.t-z.warn)*230;z.y1=z.y2=yy}});e.atkT+=1.6;break}
     case'spinner':{const a0=rnd(0,TAU),dirn=pick([-1,1]);for(let s=0;s<16;s++)later(s*.14,()=>{if(!e.alive)return;for(let k=0;k<3;k++){const an=a0+dirn*s*.38+k*TAU/3;ebul.push({x:e.x,y:e.y+10,vx:Math.cos(an)*165,vy:Math.sin(an)*165,r:8,dmg:14,col:'#c9b8ff',pink:s%5===0&&k===0})}});pop('Loading...',e.x,e.y+90,'#c9b8ff',22);e.atkT+=1.6;break}
-    case'countdown':for(let i=0;i<3;i++){const x=clamp(P.x+rnd(-90,90),L+50,R-50),y=clamp(P.y+rnd(-70,50),ZTOP,ZBOT),w=T(1.1+i*.45);
-      Z({k:'c',x,y,r:60,warn:w,dur:.05,dmg:24,col:'255,79,163',onFire:z=>{ringFx(z.x,z.y,'255,79,163',60,.3,6);spark(z.x,z.y,'#ff9bd0',12,260,.4,3);addShake(5);sfx.boom()}});later(w-.45,()=>{if(e.alive)pop(String(3-i),x,y-10,'#ff4fa3',40)})}e.atkT+=1.4;break;
+    case'countdown':for(let i=0;i<2;i++){const x=clamp(P.x+rnd(-90,90),L+50,R-50),y=clamp(P.y+rnd(-70,50),ZTOP,ZBOT),w=T(1.1+i*.45);
+      Z({k:'c',x,y,r:60,warn:w,dur:.05,dmg:24,col:'255,79,163',onFire:z=>{ringFx(z.x,z.y,'255,79,163',60,.3,6);spark(z.x,z.y,'#ff9bd0',12,260,.4,3);addShake(5);sfx.boom()}});later(w-.45,()=>{if(e.alive)pop(String(2-i),x,y-10,'#ff4fa3',40)})}e.atkT+=1.4;break;
   }
 }
 function adPopAI(e,dt,frozen){const o=e.owner;e.x=e.hx+Math.sin(e.t*.9+e.idx)*14;e.y=e.hy+Math.cos(e.t*1.1+e.idx)*8;if(frozen||o.trans>0)return;

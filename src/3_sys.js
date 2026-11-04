@@ -139,7 +139,7 @@ function spawnElite(){if(mobN()>MOBCAP+10)return;const opts=[['brute','grunt','g
 function spawnBats(){const n=ri(3,4)+Math.min(4,stage);const side=pick([-1,1]);for(let i=0;i<n;i++)later(i*.28,()=>{const sd=stage>=2&&i%2?-side:side;const e=spawnEnemy('bat',sd<0?L+6:R-6,rnd(60,ZTOP-40));e.side=sd})}
 function spawnChargers(){const n=1+Math.min(3,Math.floor(stage/2)+(Math.random()<.5?1:0));for(let i=0;i<n;i++)spawnEnemy('charger',rnd(L+40,R-40),-30-i*60)}
 function spawnMoles(){const n=ri(2,3)+Math.floor(stage/2);for(let i=0;i<n;i++)later(i*.5,()=>{const e=spawnEnemy('mole',rnd(L+40,R-40),rnd(80,240));e.under=true;e.mode=0;e.t=0})}
-function spawnStalkers(){const n=ri(2,3)+Math.floor(stage/2);for(let i=0;i<n;i++){const x=rnd(L+30,R-30);zone({k:'c',x,y:H-20,r:22,warn:.8,dur:0,dmg:0,col:'194,139,255',tag:'up'});later(.8+i*.15,()=>spawnEnemy('stalker',x,H+20))}}
+function spawnStalkers(){const n=ri(2,3)+Math.floor(stage/2);for(let i=0;i<n;i++){const x=rnd(L+30,R-30);zone({k:'c',x,y:H-20,r:22,warn:.8,dur:0,dmg:0,col:'194,139,255',tag:'up'});later(.8+i*.15,()=>spawnEnemy('stalker',x,H+20,{noChamp:true}))}}
 
 function hurt(e,d,o={}){
   if(!e.alive||d<=0||e.gone)return;
@@ -229,6 +229,8 @@ function volley(echo){
   const one=C.w==='bullet'||C.w==='shot'?baseDmg()*2.5:baseDmg();const kind=SIDEK[C.w];
   for(let k=0;k<P.sideN;k++)for(const s of[-1,1])newProj(kind,P.x,P.y-12,-Math.PI/2+s*(.6+.13*k),one,{wb:2});
   for(let k=0;k<P.backN;k++)newProj(kind,P.x,P.y+12,Math.PI/2+(k-(P.backN-1)/2)*.25,one,{wb:1});
+  // the hero turns to shoot assassins coming up from behind
+  if(!echo){const st=nearest(P.x,P.y,280,null,o=>o.d.stalk&&o.y>P.y-20);if(st){const an=Math.atan2(st.y-P.y,st.x-P.x);for(let k=0;k<(P.projN>=4?2:1);k++)newProj(kind,P.x,P.y+8,an+(k?.1:0),one*3,{wb:0,hom:3})}}
   if(!echo&&P.fu.has('plasma')&&volleyN%3===0)newProj('lance',P.x,P.y-20,-Math.PI/2,baseDmg()*3*mult,{col:'#ff9a5a',plasma:true});
   if(!echo&&P.fu.has('ballista')&&volleyN%4===0)newProj('lance',P.x,P.y-20,-Math.PI/2,baseDmg()*6*mult,{col:'#f4efe6',knock:26,big:1.4});
   if(!echo&&P.re.has('echo')&&volleyN%4===0)P.echoT=.09;
@@ -292,7 +294,7 @@ function updateProjs(dt){
 function dash(){
   if(state!=='play'||P.dashCd>0||P.dashT>0)return;
   let dx=P.lastDx,dy=P.lastDy;const l=Math.hypot(dx,dy);if(l<.1){dx=0;dy=-1}else{dx/=l;dy/=l}
-  buzz(12);P.ddx=dx;P.ddy=dy;P.dashT=.14;P.parryWin=.24;P.dashCd=P.dashMax;P.iframe=Math.max(P.iframe,.34);sfx.dash();
+  buzz(12);P.dashN=(P.dashN||0)+1;P.ddx=dx;P.ddy=dy;P.dashT=.14;P.parryWin=.24;P.dashCd=P.dashMax;P.iframe=Math.max(P.iframe,.34);sfx.dash();
   if(P.re.has('hourglass')){tTarget=.35;tHold=.9}
   if(P.re.has('drum'))P.drumT=2.5;
   if(P.re.has('boots')){forNear(P.x,P.y,150,e=>{if(hittable(e)&&(e.x-P.x)**2+(e.y-P.y)**2<150*150){boltFx(P.x,P.y,e.x,e.y,'#ffe066',3);hurt(e,baseDmg()*3,{col:'#ffe066'})}});ringFx(P.x,P.y,'255,230,100',150,.3,4);sfx.zap()}
@@ -364,13 +366,13 @@ function gateClass(g){const effs=g.opts?g.opts[g.oi]:g.effs;if(effs.some(e=>e.t=
 function gateEffs(g){return g.opts?g.opts[g.oi]:g.effs}
 function spawnGateRow(){
   const s=stage,k=dm('pacts')?'pact':wpick(s===1?{clean:2,pact:2.2,grow:1.4,guarded:1.2,roulette:1,triple:.8}:{clean:.6,pact:3,grow:1,guarded:1.6,roulette:1.6,triple:1.6});
-  let sets,extra={};
-  if(k==='clean')sets=Math.random()<.6?[[goodEff(false)],[goodEff(false)]]:[[goodEff(true)],[badEff(false)]];
-  else if(k==='pact')sets=[[goodEff(true),badEff(Math.random()<.5)],[goodEff(true),badEff(Math.random()<.5)]];
-  else if(k==='grow')sets=[[{t:'proj',v:-ri(3,5+s*2)}],Math.random()<.5?[goodEff(false)]:[goodEff(true),badEff(true)]];
-  else if(k==='guarded')sets=[[goodEff(true),goodEff(false)],[goodEff(false)]];
+  let sets,extra={};const used=new Set(k==='grow'?['proj']:[]),uq=(fn,b)=>{for(let t=0;t<10;t++){const e=fn(b);if(!used.has(e.t)){used.add(e.t);return e}}const e=fn(b);used.add(e.t);return e},gU=b=>uq(goodEff,b),bU=b=>uq(badEff,b);
+  if(k==='clean')sets=Math.random()<.6?[[gU(false)],[gU(false)]]:[[gU(true)],[bU(false)]];
+  else if(k==='pact')sets=[[gU(true),bU(Math.random()<.5)],[gU(true),bU(Math.random()<.5)]];
+  else if(k==='grow')sets=[[{t:'proj',v:-ri(3,5+s*2)}],Math.random()<.5?[gU(false)]:[gU(true),bU(true)]];
+  else if(k==='guarded')sets=[[gU(true),gU(false)],[gU(false)]];
   else if(k==='roulette')sets=[null,null];
-  else{const cu=Object.keys(CU).filter(c=>!P.cu.has(c));sets=[[goodEff(false)],[goodEff(true),badEff(true)],cu.length?[{t:'curse',v:pick(cu)}]:[badEff(true)]]}
+  else{const cu=Object.keys(CU).filter(c=>!P.cu.has(c));sets=[[gU(false)],[gU(true),bU(true)],cu.length?[{t:'curse',v:pick(cu)}]:[bU(true)]]}
   const n=sets.length,gap=8,w=(R-L-gap*(n-1))/n;
   const order=shuffle(sets.map((x,i)=>i));
   const gates=order.map((si,i)=>{const g={x:L+i*(w+gap),w,hits:0,bump:0,effs:sets[si]};
@@ -672,7 +674,9 @@ function updateEnemies(dt){
       else if(e.mode===2){e.hold-=dt;if(e.hold<=0){e.mode=0;e.t=0;smoke(e.x,e.y,4,12)}}
       e.x=clamp(e.x,L+e.r,R-e.r);if(!e.under)contact(e);continue;
     }
-    if(d.stalk){const dx=P.x-e.x,dy=P.y-e.y,l=Math.hypot(dx,dy)||1;e.x+=dx/l*sp*dt;e.y+=dy/l*sp*dt;e.wob+=dt*8;sep(e);contact(e);if(e.y<-40)e.alive=false;continue}
+    if(d.stalk){if(e.t>9){e.alive=false;smoke(e.x,e.y,4,12);continue}const dx=P.x-e.x,dy=P.y-e.y,l=Math.hypot(dx,dy)||1;e.x+=dx/l*sp*dt;e.y+=dy/l*sp*dt;e.wob+=dt*8;sep(e);
+      if(P.dashT>0&&e.dashHit!==P.dashN&&l<e.r+P.r+16){e.dashHit=P.dashN;hurt(e,baseDmg()*5+e.max*.5,{crit:true,col:'#ffe066'});ringFx(e.x,e.y,'255,230,100',30,.25,3)}
+      if(e.alive)contact(e);if(e.y<-40)e.alive=false;continue}
     e.y+=sp*dt;
     if(sp>0){e.wob+=dt*8;if(e.y>P.y-440&&e.y<P.y+30){const dx=P.x-e.x;e.x+=Math.sign(dx)*Math.min(Math.abs(dx),sp*.8*dt)}else e.x+=Math.sin(e.wob*.4)*dt*10}
     sep(e);e.x=clamp(e.x,L+e.r*.8,R-e.r*.8);contact(e);

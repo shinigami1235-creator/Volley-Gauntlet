@@ -87,7 +87,7 @@ const ED={
   bat:{r:12,hp:7,spd:280,col:'#6a3f8e',xp:1,dmg:12,sc:14,bat:1},
   charger:{r:20,hp:44,spd:40,col:'#8a5a3a',xp:3,dmg:22,sc:35,charge:1},
   mole:{r:17,hp:36,spd:130,col:'#7a5236',xp:3,dmg:16,sc:35,mole:1},
-  stalker:{r:14,hp:22,spd:82,col:'#403852',xp:2,dmg:14,sc:25,stalk:1},
+  stalker:{r:14,hp:14,spd:72,col:'#403852',xp:2,dmg:14,sc:25,stalk:1},
   ogre:{r:44,hp:900,spd:40,col:'#6f8f3a',xp:30,dmg:30,sc:900,heavy:1,mini:1,name:'Ogre Chief'},
   witch:{r:32,hp:780,spd:0,col:'#7a3fb0',xp:30,dmg:20,sc:900,heavy:1,mini:1,name:'Hex Witch'},
   golem:{r:46,hp:1000,spd:30,col:'#7d7f8c',xp:30,dmg:30,sc:900,heavy:1,mini:1,name:'Iron Golem'},
@@ -268,7 +268,9 @@ function paintEnemy(g,type,r,col){
     g.fillStyle='#fff';g.beginPath();g.ellipse(0,r*.12,r*.42,r*.38,0,0,TAU);g.fill();g.fillStyle='#113';g.beginPath();g.arc(0,r*.24,r*.2,0,TAU);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(-r*.07,r*.16,r*.06,0,TAU);g.fill();return}
   eyes(.1);if(type==='grunt'||type==='brute')fangs();
 }
-function buildSprites(){for(const t in ED){if(BART[t]){const b=bossStill(t,ED[t].r);SPR[t]={c:b.c,f:b.c,s:b.s};continue}const r=ED[t].r,S=Math.ceil(r*(t==='bat'?5:3.8))*2;const c=mk(S,S,g=>{g.translate(S/2,S/2);g.scale(2,2);paintEnemy(g,t==='clone'?'lich':t,r,ED[t].col)});SPR[t]={c,f:flashOf(c),s:S/2}}}
+// Each enemy gets a dark outline with a faint light rim, so it stays readable over the floor and over effects.
+function outlineOf(c){const ring=(g,rad,col)=>{const t=mk(c.width,c.height,h=>{for(let i=0;i<16;i++){const a=i*TAU/16;h.drawImage(c,Math.cos(a)*rad,Math.sin(a)*rad)}h.globalCompositeOperation='source-in';h.fillStyle=col;h.fillRect(0,0,c.width,c.height)});g.drawImage(t,0,0)};return mk(c.width,c.height,g=>{ring(g,6,'rgba(255,236,214,.5)');ring(g,3.5,'#08040c')})}
+function buildSprites(){for(const t in ED){if(BART[t]){const b=bossStill(t,ED[t].r);SPR[t]={c:b.c,f:b.c,s:b.s};continue}const r=ED[t].r,S=Math.ceil(r*(t==='bat'?5:3.8))*2;const c=mk(S,S,g=>{g.translate(S/2,S/2);g.scale(2,2);paintEnemy(g,t==='clone'?'lich':t,r,ED[t].col)});SPR[t]={c,f:flashOf(c),o:outlineOf(c),s:S/2}}}
 
 /* ---------------- heroes ---------------- */
 const CLASSES={

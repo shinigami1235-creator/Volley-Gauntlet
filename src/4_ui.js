@@ -189,7 +189,7 @@ function drawEnemies(){
     if(e.d.charge&&e.mode===1)ctx.translate(rnd(-2,2),0);
     if(FEET[e.type]&&!e.under){const ph=Math.sin(e.wob*1.6);ctx.fillStyle='#3b2a1c';ctx.strokeStyle='#120a06';ctx.lineWidth=1.5;for(const q of[-1,1]){ctx.beginPath();ctx.ellipse(q*e.r*.45,e.r*.98-(q*ph>0?e.r*.18:0),e.r*.28,e.r*.18,0,0,TAU);ctx.fill();ctx.stroke()}}
     if(e.fuse!=null&&Math.floor(e.fuse*14)%2)ctx.filter='brightness(2.2)';
-    if(BART[e.type])bossLive(e);else{ctx.drawImage(sp.c,-s/2,-s/2,s,s);
+    if(BART[e.type])bossLive(e);else{if(sp.o)ctx.drawImage(sp.o,-s/2,-s/2,s,s);ctx.drawImage(sp.c,-s/2,-s/2,s,s);
     if(e.flash>0){const ga=ctx.globalAlpha;ctx.globalAlpha=ga*(e.d.boss||e.d.mini?.35:.75);ctx.drawImage(sp.f,-s/2,-s/2,s,s);ctx.globalAlpha=ga}}
     ctx.filter='none';
     if(e.frzT>0||freezeAll>0){ctx.fillStyle='rgba(150,225,255,.55)';ctx.beginPath();ctx.arc(0,0,e.r*1.05,0,TAU);ctx.fill();ctx.strokeStyle='rgba(230,250,255,.9)';ctx.lineWidth=2;ctx.stroke()}

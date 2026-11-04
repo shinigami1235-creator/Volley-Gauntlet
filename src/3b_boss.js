@@ -92,7 +92,7 @@ function wardenAI(e,dt,K,cd,Z){
   if(K===1){const a=['ring','aim','hammer','ring','summon','aim','hammer'][e.atkI++%7];e.atkT=cd;
     if(a==='ring'){const n=D.extra?18:14,off=rnd(0,TAU);ring(e.x,e.y,n,170,off,14,{pinkEvery:7});ringFx(e.x,e.y,'194,139,255',80,.3,5);sfx.zap()}
     if(a==='aim'){aimed(e.x,e.y+30,5,.16,300,14,{pinkMid:true});later(.25,()=>{if(e.alive)aimed(e.x,e.y+30,5,.16,300)})}
-    if(a==='hammer'){for(let i=0;i<(D.extra?3:2);i++)later(i*.4,()=>{if(!e.alive)return;const x=clamp(P.x+P.lastDx*60*i,L+40,R-40),y=clamp(P.y+P.lastDy*60*i,ZTOP-40,ZBOT);Z({k:'c',x,y,r:70,warn:.9,dur:.05,dmg:22,onFire:z=>{explode(z.x,z.y,70,0,{col:'255,90,70',quiet:true});addShake(6)}})});e.atkT+=.6}
+    if(a==='hammer'){for(let i=0;i<2;i++)later(i*.4,()=>{if(!e.alive)return;const x=clamp(P.x+P.lastDx*60*i,L+40,R-40),y=clamp(P.y+P.lastDy*60*i,ZTOP-40,ZBOT);Z({k:'c',x,y,r:70,warn:.9,dur:.05,dmg:22,onFire:z=>{explode(z.x,z.y,70,0,{col:'255,90,70',quiet:true});addShake(6)}})});e.atkT+=.6}
     if(a==='summon'){for(let i=0;i<5;i++)spawnEnemy('grunt',e.x+rnd(-90,90),e.y+rnd(30,60),{noChamp:true});smoke(e.x,e.y+40,6,16)}}
   else if(K==='A'){const a=['keys','ring','keys','aim'][e.atkI++%4];e.atkT=cd+.7;
     if(a==='keys'){for(let i=0;i<3;i++)later(i*.22,()=>{if(e.alive)aimed(e.x,e.y+30,1,0,230,14,{pink:true,key:true,r:10})})}
@@ -188,7 +188,7 @@ function updatePart(e,dt,frozen){
     return}
   if(e.type==='head'){const hx=[-70,0,70][e.idx],hy=[40,62,40][e.idx];e.x=o.x+hx+Math.sin(e.t*2+e.idx)*6;e.y=o.y+hy+Math.cos(e.t*2.3+e.idx)*5;if(frozen||o.trans>0)return;
     const dead=3-o.parts.filter(p=>p.alive).length;e.atkT-=dt*(1+dead*.5);if(e.atkT>0)return;e.atkT=2.8*D.bcd;
-    if(e.idx===0){for(let i=0;i<3;i++){const x=i===0?P.x:clamp(P.x+rnd(-120,120),L+30,R-30),y=i===0?P.y:clamp(P.y+rnd(-110,90),ZTOP-40,ZBOT);zone({k:'c',x,y,r:42,warn:.8+i*.14,dur:.05,dmg:20,col:'195,168,255',boss:true,onFire:z=>{boltFx(z.x,-10,z.x,z.y,'#c3a8ff',5);spark(z.x,z.y,'#c3a8ff',10,240,.4,3);sfx.zap()}})}}
+    if(e.idx===0){for(let i=0;i<2;i++){const x=i===0?P.x:clamp(P.x+rnd(-120,120),L+30,R-30),y=i===0?P.y:clamp(P.y+rnd(-110,90),ZTOP-40,ZBOT);zone({k:'c',x,y,r:42,warn:.8+i*.14,dur:.05,dmg:20,col:'195,168,255',boss:true,onFire:z=>{boltFx(z.x,-10,z.x,z.y,'#c3a8ff',5);spark(z.x,z.y,'#c3a8ff',10,240,.4,3);sfx.zap()}})}}
     else if(e.idx===1){const dirn=pick([-1,1]),a0=Math.PI/2+.8*dirn,a1=Math.PI/2-.8*dirn,len=560;zone({k:'l',x1:e.x,y1:e.y,x2:e.x,y2:e.y,w:30,warn:.8,dur:1.2,dmg:16,cont:true,col:'255,140,50',beam:true,flame:true,boss:true,follow:z=>{const p=clamp((z.t-z.warn)/z.dur,0,1),an=a0+(a1-a0)*p;z.x1=e.x;z.y1=e.y+10;z.x2=z.x1+Math.cos(an)*len;z.y2=z.y1+Math.sin(an)*len}});e.atkT+=1}
     else{for(let i=0;i<7;i++)later(i*.15,()=>{if(e.alive)ebul.push({x:e.x,y:e.y+14,vx:0,vy:200,r:8,dmg:14,wave:true,x0:e.x,wt:i*.4,amp:44,pink:i%3===1})})}
     return}
@@ -229,7 +229,7 @@ const TWISTS={enraged:{n:'Enraged',d:'It moves and attacks 25% faster.'},armored
 function rollTwists(){if(diff==='story')return[];const n=run.mode==='rush'?(run.rushI>=RUSHB.length?2:run.rushI>=3?1:0):run.loop>0?2:diff==='nightmare'?(stage>=4?2:1):diff==='hard'?(stage>=2&&Math.random()<.6?1:0):(stage>=3&&Math.random()<.4?1:0);const ks=Object.keys(TWISTS),out=[];while(out.length<n){const k=pick(ks);if(!out.includes(k))out.push(k)}return out}
 function twistTick(e,dt){const t=e.twT;
   if(e.tw.includes('summoner')){t.s=(t.s??7)-dt;if(t.s<=0){t.s=7;const ty=pick(['grunt','runner','shooter','bomber']);for(let i=0;i<4;i++)spawnEnemy(ty,e.x+rnd(-100,100),e.y+rnd(20,60),{noChamp:true});smoke(e.x,e.y+40,5,16)}}
-  if(e.tw.includes('volatile')){t.v=(t.v??5)-dt;if(t.v<=0){t.v=5;for(let i=0;i<3;i++){const x=clamp(P.x+rnd(-110,110),L+30,R-30),y=clamp(P.y+rnd(-90,70),ZTOP,ZBOT);zone({k:'c',x,y,r:34,warn:.9,dur:2.2,dmg:6,cont:true,fire:true,boss:true,col:'255,120,40'})}}}
+  if(e.tw.includes('volatile')){t.v=(t.v??5)-dt;if(t.v<=0){t.v=5;for(let i=0;i<2;i++){const x=clamp(P.x+rnd(-110,110),L+30,R-30),y=clamp(P.y+rnd(-90,70),ZTOP,ZBOT);zone({k:'c',x,y,r:34,warn:.9,dur:2.2,dmg:6,cont:true,fire:true,boss:true,col:'255,120,40'})}}}
   if(e.tw.includes('barrage')){t.b=(t.b??6)-dt;if(t.b<=0){t.b=6;ring(e.x,e.y,D.extra?20:16,160,rnd(0,TAU),14,{pinkEvery:8});ringFx(e.x,e.y,'255,80,80',70,.3,4)}}
   if(e.tw.includes('regen')&&runT-(e.lastHit||0)>3){const cap=e.max*(e.phases-e.phase+1)/e.phases;e.hp=Math.min(cap,e.hp+e.max*.015*dt);if(Math.random()<.1)spark(e.x+rnd(-30,30),e.y,'#ff9a5a',1,40,.5,3)}
 }
@@ -247,7 +247,7 @@ function slimeAI(e,dt,K,cd,Z){
   const a=seq[e.atkI++%seq.length];e.atkT=cd*(K==='B'?.85:1);
   if(a==='hop'){const tx=clamp(P.x+rnd(-60,60),L+e.r,R-e.r);e.jump={sx:e.x,sy:e.y,tx,ty:180+rnd(-10,20),t:0,T:T(.55),land:()=>{ring(e.x,e.y,D.extra?16:12,170,rnd(0,TAU),14,{pinkEvery:6});addShake(6);sfx.boom();smoke(e.x,e.y+30,4,16)}}}
   if(a==='spit')for(let i=0;i<3;i++)later(i*.25,()=>{if(e.alive)aimed(e.x,e.y+30,3,.25,260,14)});
-  if(a==='puddle')for(let i=0;i<(D.extra?3:2);i++){const x=clamp(P.x+rnd(-120,120),L+40,R-40),y=clamp(P.y+rnd(-100,60),ZTOP,ZBOT);Z({k:'c',x,y,r:48,warn:.9,dur:3,dmg:5,cont:true,slow:true,col:'160,230,90'})}
+  if(a==='puddle')for(let i=0;i<2;i++){const x=clamp(P.x+rnd(-120,120),L+40,R-40),y=clamp(P.y+rnd(-100,60),ZTOP,ZBOT);Z({k:'c',x,y,r:48,warn:.9,dur:3,dmg:5,cont:true,slow:true,col:'160,230,90'})}
   if(a==='split'){for(let i=0;i<(D.extra?4:3);i++)spawnEnemy('splitter',e.x+rnd(-60,60),e.y+40,{noChamp:true});ring(e.x,e.y,10,140,rnd(0,TAU),14)}
   if(a==='bigslam'){const tx=clamp(P.x,L+e.r,R-e.r),ty=clamp(P.y,ZTOP,ZBOT-20),w=T(1.1);Z({k:'c',x:tx,y:ty,r:e.r+30,warn:w,dur:.05,dmg:0,fixed:true,col:'160,230,90'});e.slam={ph:0,t:0,T:w,sx:e.x,sy:e.y,tx,ty};e.atkT+=1.2}
 }
