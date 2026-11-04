@@ -1930,7 +1930,7 @@ function setBiome(k){BIOME=k;TORCH=null;buildTiles()}
 /* ================= save ================= */
 const SAVE_KEY='vg_save3';
 let S=null;
-function defSave(){return{v:1,embers:0,forge:{},unl:{},ach:{},mastery:{},skin:{},weapon:{},codex:{en:{},boss:{},relic:{},fuse:{},curse:{},evo:{}},grades:{},stats:{runs:0,bossKills:0,bossBy:{},best:{}},daily:{},own:{},sel:{mode:'gauntlet',cls:'ranger'}}}
+function defSave(){return{v:1,embers:0,forge:{},unl:{},ach:{},mastery:{},skin:{},weapon:{},codex:{en:{},boss:{},relic:{},fuse:{},curse:{},evo:{}},grades:{},stats:{runs:0,bossKills:0,bossBy:{},best:{}},daily:{},own:{},sel:{mode:'gauntlet',cls:'ranger'},backupAt:0,backupRuns:0}}
 function mergeSave(o){
   if(!o||typeof o!=='object'||o.v!==1)return false;const d=defSave();
   for(const k in d){if(o[k]===undefined)continue;if(d[k]&&typeof d[k]==='object'&&!Array.isArray(d[k]))d[k]=Object.assign(d[k],o[k]);else d[k]=o[k]}
@@ -2117,6 +2117,7 @@ function endRun(){
   const mx=Math.floor(((kills-pd.kills)+(stage-(pd.stage||1))*60+(run.bosses-pd.bosses)*150)*Math.max(.5,dmul*.8));
   const before=mLevel(P.cls);if(run.mode!=='daily')S.mastery[P.cls]=(S.mastery[P.cls]||0)+mx;const after=mLevel(P.cls);
   S.embers+=e;S.stats.runs++;run.embersGot+=e;
+  if(S.stats.runs-(S.backupRuns||0)>=10&&S.stats.runs%10===0)setTimeout(()=>toast('Back up your progress<small>Save code, then Save to file. It has been '+(S.stats.runs-(S.backupRuns||0))+' runs since the last backup.</small>'),1200);
   const bk=bestKey(P.cls);const nb=score>(S.stats.best[bk]||0);if(nb)S.stats.best[bk]=Math.floor(score);best=S.stats.best;
   if(run.mode==='daily'){const d=S.daily[run.daily.key]||[];d.push({s:Math.floor(score),st:stage});d.sort((a,b)=>b.s-a.s);S.daily[run.daily.key]=d.slice(0,5);const ks=Object.keys(S.daily).sort();while(ks.length>14)delete S.daily[ks.shift()]}
   run.paid={score,bosses:run.bosses,minis:run.minis,gradeB:run.gradeB,kills,stage,twists:run.twists||0};
@@ -2172,10 +2173,18 @@ function showCodex(tab){state='codex';codexTab=tab||codexTab;
 function lockHint(u){for(const k in ACH)if(ACH[k].un===u)return ACH[k].d;return''}
 /* ---------- save code screen ---------- */
 function showSave(){state='save';
-  ovX('Save code','Progress lives in this browser, and some game sites do not keep it after you close the page. Copy the code to move it to another device, or paste a code here to load it. Loading replaces the progress on this device.',`<textarea id="scOut" readonly rows="4"></textarea><div class="row"><button class="btn sm" id="scCopy">Select code</button></div><textarea id="scIn" rows="3" placeholder="Paste a code that starts with VG3."></textarea><p class="muted" id="scMsg"></p>`,[{l:'Load code',f:()=>{const ok=loadCode($('#scIn').value);$('#scMsg').textContent=ok?'Loaded.':'That code did not work. Check that you copied all of it.';if(ok){$('#scOut').value=saveCode()}}},{l:'Back',alt:true,f:toMenu}],true);
+  ovX('Save code','Progress lives in this browser, so a phone cleaner like Xiaomi\'s Optimize can wipe it. Save to file puts a backup in your Downloads folder, and Load from file brings it back. You can also copy the code to another device. Loading replaces the progress on this device.',`<div class="row"><button class="btn sm" id="scFile">Save to file</button><button class="btn sm alt" id="scLoadF">Load from file</button></div><p class="muted" id="scLast"></p><textarea id="scOut" readonly rows="4"></textarea><div class="row"><button class="btn sm" id="scCopy">Select code</button></div><textarea id="scIn" rows="3" placeholder="Paste a code that starts with VG3."></textarea><p class="muted" id="scMsg"></p>`,[{l:'Load code',f:()=>{const ok=loadCode($('#scIn').value);$('#scMsg').textContent=ok?'Loaded.':'That code did not work. Check that you copied all of it.';if(ok){$('#scOut').value=saveCode();hdrBest()}}},{l:'Back',alt:true,f:toMenu}],true);
   $('#scOut').value=saveCode();
+  const last=()=>{$('#scLast').textContent=S.backupAt?'Last file backup: '+new Date(S.backupAt).toLocaleDateString()+'.':'No file backup yet.'};last();
   $('#scCopy').onclick=()=>{const t=$('#scOut');t.focus();t.select();$('#scMsg').textContent='Selected. Press Ctrl+C to copy it.'};
+  $('#scFile').onclick=()=>{backupFile();last();$('#scMsg').textContent='Saved to Downloads as volley-gauntlet-save-'+dayKey()+'.txt.'};
+  $('#scLoadF').onclick=()=>restoreFile(ok=>{$('#scMsg').textContent=ok?'Loaded from the file.':'That file is not a Volley Gauntlet save.';if(ok){$('#scOut').value=saveCode();last();hdrBest()}});
 }
+// File backups land in Downloads, which phone cleaners leave alone
+function backupFile(){S.backupAt=Date.now();S.backupRuns=S.stats.runs;saveGame();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([saveCode()],{type:'text/plain'}));a.download='volley-gauntlet-save-'+dayKey()+'.txt';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+function restoreFile(cb){const i=document.createElement('input');i.type='file';i.accept='.txt,text/plain';i.onchange=async()=>{const f=i.files&&i.files[0];if(!f){cb(false);return}let ok=false;try{ok=loadCode(await f.text())}catch(e){}cb(ok)};i.click()}
+// ask the browser to keep this site's storage when space runs low
+function keepStorage(){try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>{if(!p)return navigator.storage.persist()}).catch(()=>{})}catch(e){}}
 
 /* ---------- route map ---------- */
 const STOPS={shop:{n:'Shop',d:'Spend gold before the stage.'},event:{n:'Event',d:'Something is waiting on the way.'},rest:{n:'Campfire',d:'Heal 40% before the stage.'},treasure:{n:'Treasure',d:'50 gold and a free skill.'}};
@@ -3544,7 +3553,7 @@ cv.addEventListener('contextrestored',repaintAll);
 setInterval(()=>{if(!document.hidden&&!canaryOk())repaintAll()},3000);
 
 /* ================= boot ================= */
-loadSave();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
+loadSave();keepStorage();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
 state='title';
 setTimeout(()=>$('#btnPlay').focus({preventScroll:true}),100);
 requestAnimationFrame(frame);

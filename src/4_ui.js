@@ -519,7 +519,7 @@ cv.addEventListener('contextrestored',repaintAll);
 setInterval(()=>{if(!document.hidden&&!canaryOk())repaintAll()},3000);
 
 /* ================= boot ================= */
-loadSave();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
+loadSave();keepStorage();selMode=S.sel.mode||'gauntlet';selCls=S.sel.cls||'ranger';buildSprites();P=newPlayer('ranger');G=newG();resize();reset('ranger');hdrBest();
 state='title';
 setTimeout(()=>$('#btnPlay').focus({preventScroll:true}),100);
 requestAnimationFrame(frame);
